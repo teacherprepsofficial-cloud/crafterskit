@@ -56,7 +56,7 @@ export default function SearchInterface({ username }: { username: string }) {
       }
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        setError(`Error: ${errData.error ?? "unknown"} — ${errData.detail ?? errData.status ?? ""}`);
+        setError(`Error: ${errData.error ?? "unknown"} — status:${errData.status} detail:${errData.detail}`);
         return;
       }
       const data: SearchResponse = await res.json();
