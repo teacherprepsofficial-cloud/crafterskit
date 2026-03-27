@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
@@ -53,8 +52,9 @@ async function buildSearchParams(userQuery: string): Promise<Record<string, stri
     messages: [{ role: "user", content: userQuery }],
   });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "{}";
-  return JSON.parse(text);
+  const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
+  const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  try { return JSON.parse(text); } catch { return {}; }
 }
 
 async function buildSearchParamsFromImage(imageBase64: string, mimeType: string): Promise<Record<string, string>> {
@@ -78,64 +78,59 @@ async function buildSearchParamsFromImage(imageBase64: string, mimeType: string)
     }],
   });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "{}";
-  return JSON.parse(text);
+  const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
+  const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  try { return JSON.parse(text); } catch { return {}; }
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { query, image, mimeType, filters: userFilters } = body;
+  try {
+    const body = await req.json();
+    const { query, image, mimeType } = body;
 
-  let searchParams: Record<string, string>;
+    let searchParams: Record<string, string>;
 
-  if (image && mimeType) {
-    searchParams = await buildSearchParamsFromImage(image, mimeType);
-  } else if (query?.trim()) {
-    searchParams = await buildSearchParams(query);
-  } else {
-    // Filter-only search (e.g. category chip click with no text) — skip Claude
-    searchParams = {};
-  }
+    if (image && mimeType) {
+      searchParams = await buildSearchParamsFromImage(image, mimeType);
+    } else if (query?.trim()) {
+      searchParams = await buildSearchParams(query);
+    } else {
+      return NextResponse.json({ error: "No query provided" }, { status: 400 });
+    }
 
-  // Apply user's explicit filters on top of Claude's output (non-empty values win)
-  if (userFilters && typeof userFilters === "object") {
-    for (const [k, v] of Object.entries(userFilters)) {
-      if (v && typeof v === "string" && v.trim()) {
-        searchParams[k] = v;
+    async function ravelrySearch(p: Record<string, string>) {
+      return fetch(
+        `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
+        { headers: { Authorization: `Basic ${RAVELRY_BASIC}` } }
+      );
+    }
+
+    const interpretedAs = searchParams.interpreted_as ?? null;
+    const { interpreted_as: _drop, ...ravelryParams } = searchParams;
+
+    let ravelryRes = await ravelrySearch(ravelryParams);
+
+    if (!ravelryRes.ok) {
+      return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
+    }
+
+    let data = await ravelryRes.json();
+
+    // If image search returned too few results, retry with just query + sort
+    if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
+      const fallback = { query: ravelryParams.query, sort: "popularity" };
+      const retryRes = await ravelrySearch(fallback);
+      if (retryRes.ok) {
+        const retryData = await retryRes.json();
+        if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
+          data = retryData;
+        }
       }
     }
+
+    return NextResponse.json({ ...data, interpreted_as: interpretedAs });
+  } catch (err) {
+    console.error("Search route error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
-  async function ravelrySearch(p: Record<string, string>) {
-    return fetch(
-      `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
-      { headers: { Authorization: `Basic ${RAVELRY_BASIC}` } }
-    );
-  }
-
-  const interpretedAs = searchParams.interpreted_as ?? null;
-  // Strip non-Ravelry keys before building request
-  const { interpreted_as: _drop, ...ravelryParams } = searchParams;
-
-  let ravelryRes = await ravelrySearch(ravelryParams);
-
-  if (!ravelryRes.ok) {
-    return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
-  }
-
-  let data = await ravelryRes.json();
-
-  // If image search returned too few results, retry with just query + sort
-  if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
-    const fallback = { query: ravelryParams.query, sort: "popularity" };
-    const retryRes = await ravelrySearch(fallback);
-    if (retryRes.ok) {
-      const retryData = await retryRes.json();
-      if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
-        data = retryData;
-      }
-    }
-  }
-
-  return NextResponse.json({ ...data, interpreted_as: interpretedAs });
 }
