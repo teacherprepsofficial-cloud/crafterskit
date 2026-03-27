@@ -19,6 +19,7 @@ interface Pattern {
 interface SearchResponse {
   patterns: Pattern[];
   paginator: { results: number };
+  interpreted_as?: string;
 }
 
 interface Suggestion {
@@ -53,6 +54,7 @@ export default function SearchInterface({ username }: { username: string }) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [interpretedAs, setInterpretedAs] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
@@ -153,6 +155,7 @@ export default function SearchInterface({ username }: { username: string }) {
     setLoading(true);
     setError("");
     setResults(null);
+    setInterpretedAs(null);
 
     try {
       const body = searchImage
@@ -173,6 +176,7 @@ export default function SearchInterface({ username }: { username: string }) {
       const data: SearchResponse = await res.json();
       setResults(data.patterns || []);
       setTotal(data.paginator?.results || 0);
+      setInterpretedAs(data.interpreted_as ?? null);
     } catch {
       setError("Something went wrong. Try again.");
     } finally {
@@ -301,6 +305,11 @@ export default function SearchInterface({ username }: { username: string }) {
           </form>
 
         </div>
+
+        {/* Interpreted as */}
+        {interpretedAs && !loading && (
+          <p className="text-xs text-gray-400 mb-4">Interpreted as: {interpretedAs}</p>
+        )}
 
         {/* Error */}
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}

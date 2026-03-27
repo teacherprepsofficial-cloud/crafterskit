@@ -18,17 +18,27 @@ Ravelry /patterns/search.json accepts these query params:
 Return ONLY a valid JSON object with the search params. No explanation. No markdown. Example:
 {"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"popularity"}`;
 
-const IMAGE_PROMPT = `Analyze this image and identify what knitting or crochet pattern someone would search for to make this item.
+const IMAGE_PROMPT = `Look at this image carefully. Identify the SPECIFIC type of garment or knitted/crocheted item shown.
 
-Focus only on:
-1. Is it knitting or crochet? (if unclear, omit craft)
-2. What is the garment/item type? (e.g. "mini skirt", "cardigan", "beanie", "shawl", "socks")
-3. Any highly visible, defining feature (e.g. "cable", "colorwork", "lace") — only if clearly visible
+Be precise about the garment category:
+- Is it a sweater, cardigan, vest, tank top, pullover, hoodie?
+- Is it a hat, beanie, beret, headband?
+- Is it a scarf, cowl, shawl, wrap?
+- Is it socks, mittens, gloves?
+- Is it a skirt, shorts, pants, dress?
+- Is it a blanket, dishcloth, bag?
 
-Return ONLY a JSON object with "query", optionally "craft", and "sort":"popularity". Keep "query" short (2-4 words max — just the item type and one key feature if obvious). Do NOT include weight, fit, or pa unless you are certain. Fewer params = more results.
+Then: is it knitting or crochet? Only include if you can tell.
 
-Example for a plain blue mini skirt: {"craft":"knitting","query":"mini skirt","sort":"popularity"}
-Example for a cable sweater: {"craft":"knitting","query":"cable sweater","sort":"popularity"}`;
+Return ONLY a JSON object with:
+- "query": the garment type in 1-3 words (be specific — "vest" not "top", "cardigan" not "sweater" if it has an open front)
+- "craft": "knitting" or "crochet" only if clearly identifiable
+- "sort": "popularity"
+- "interpreted_as": one sentence describing what you see (e.g. "Blue knitted sleeveless vest")
+
+Example: {"craft":"knitting","query":"sleeveless vest","sort":"popularity","interpreted_as":"Blue ribbed knitted vest"}`;
+
+
 
 async function buildSearchParams(userQuery: string): Promise<Record<string, string>> {
   const message = await anthropic.messages.create({
@@ -94,7 +104,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let ravelryRes = await ravelrySearch(searchParams);
+  const interpretedAs = searchParams.interpreted_as ?? null;
+  // Strip non-Ravelry keys before building request
+  const { interpreted_as: _drop, ...ravelryParams } = searchParams;
+
+  let ravelryRes = await ravelrySearch(ravelryParams);
 
   if (!ravelryRes.ok) {
     if (ravelryRes.status === 403) {
@@ -106,8 +120,8 @@ export async function POST(req: NextRequest) {
   let data = await ravelryRes.json();
 
   // If image search returned too few results, retry with just query + sort
-  if (image && mimeType && (data.patterns?.length ?? 0) < 4 && searchParams.query) {
-    const fallback = { query: searchParams.query, sort: "popularity" };
+  if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
+    const fallback = { query: ravelryParams.query, sort: "popularity" };
     const retryRes = await ravelrySearch(fallback);
     if (retryRes.ok) {
       const retryData = await retryRes.json();
@@ -117,5 +131,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({ ...data, interpreted_as: interpretedAs });
 }
