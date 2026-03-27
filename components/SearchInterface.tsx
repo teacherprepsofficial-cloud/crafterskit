@@ -50,6 +50,10 @@ export default function SearchInterface({ username }: { username: string }) {
         body: JSON.stringify({ query: q }),
       });
 
+      if (res.status === 401) {
+        window.location.href = "/";
+        return;
+      }
       if (!res.ok) throw new Error("Search failed");
       const data: SearchResponse = await res.json();
       setResults(data.patterns || []);
@@ -74,7 +78,7 @@ export default function SearchInterface({ username }: { username: string }) {
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500">@{username}</span>
           <button
-            onClick={() => signOut()}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
           >
             Sign out

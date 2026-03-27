@@ -4,7 +4,7 @@ import SearchInterface from "@/components/SearchInterface";
 export default async function Home() {
   const session = await auth();
 
-  if (!session) {
+  if (!session || !session.accessToken) {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
