@@ -43,6 +43,7 @@ export default function SearchInterface({ username }: { username: string }) {
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
@@ -58,8 +59,26 @@ export default function SearchInterface({ username }: { username: string }) {
   function handleQueryChange(val: string) {
     setQuery(val);
     setShowSuggestions(true);
+    setActiveIndex(-1);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      pickSuggestion(suggestions[activeIndex].name);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setActiveIndex(-1);
+    }
   }
 
   // Close suggestions on outside click
@@ -117,6 +136,7 @@ export default function SearchInterface({ username }: { username: string }) {
     setQuery(name);
     setShowSuggestions(false);
     setSuggestions([]);
+    setActiveIndex(-1);
     handleSearch(name);
   }
 
@@ -152,6 +172,7 @@ export default function SearchInterface({ username }: { username: string }) {
                 type="text"
                 value={query}
                 onChange={(e) => handleQueryChange(e.target.value)}
+                onKeyDown={handleKeyDown}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder="e.g. cozy cabled sweater in worsted weight for women"
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
@@ -166,7 +187,8 @@ export default function SearchInterface({ username }: { username: string }) {
                       key={i}
                       type="button"
                       onMouseDown={() => pickSuggestion(s.name)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                      onMouseEnter={() => setActiveIndex(i)}
+                      className={`w-full text-left px-4 py-2.5 border-b border-gray-100 last:border-0 ${i === activeIndex ? "bg-gray-100" : "hover:bg-gray-50"}`}
                     >
                       <span className="text-sm font-medium text-gray-900">{s.name}</span>
                       {s.designer && (
