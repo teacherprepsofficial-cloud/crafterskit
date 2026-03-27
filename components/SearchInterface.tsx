@@ -43,7 +43,7 @@ function highlightSuggestion(name: string, typed: string) {
   );
 }
 
-export default function SearchInterface({ username }: { username: string }) {
+export default function SearchInterface({ username }: { username: string | null }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Pattern[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -247,13 +247,17 @@ export default function SearchInterface({ username }: { username: string }) {
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">CraftersKit</h1>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">@{username}</span>
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Sign out
-          </button>
+          {username && (
+            <>
+              <span className="text-sm text-gray-500">@{username}</span>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Sign out
+              </button>
+            </>
+          )}
         </div>
       </header>
 

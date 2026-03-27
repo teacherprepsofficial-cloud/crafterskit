@@ -4,6 +4,10 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
 
+const RAVELRY_BASIC = Buffer.from(
+  `${process.env.RAVELRY_CLIENT_ID!.trim()}:${process.env.RAVELRY_CLIENT_SECRET!.trim()}`
+).toString("base64");
+
 const SYSTEM_PROMPT = `You are a Ravelry pattern search assistant. Convert natural language queries into Ravelry API search parameters.
 
 Ravelry /patterns/search.json accepts these query params:
@@ -78,11 +82,6 @@ async function buildSearchParamsFromImage(imageBase64: string, mimeType: string)
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.accessToken) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
   const body = await req.json();
   const { query, image, mimeType } = body;
 
@@ -100,7 +99,7 @@ export async function POST(req: NextRequest) {
   async function ravelrySearch(p: Record<string, string>) {
     return fetch(
       `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
-      { headers: { Authorization: `Bearer ${session!.accessToken}` } }
+      { headers: { Authorization: `Basic ${RAVELRY_BASIC}` } }
     );
   }
 
@@ -111,9 +110,6 @@ export async function POST(req: NextRequest) {
   let ravelryRes = await ravelrySearch(ravelryParams);
 
   if (!ravelryRes.ok) {
-    if (ravelryRes.status === 403) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
     return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
   }
 
