@@ -47,6 +47,7 @@ export default function SearchInterface({ username }: { username: string }) {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
+  const typedQueryRef = useRef("");
 
   const fetchSuggestions = useCallback(async (q: string) => {
     if (q.length < 2) { setSuggestions([]); return; }
@@ -57,6 +58,7 @@ export default function SearchInterface({ username }: { username: string }) {
   }, []);
 
   function handleQueryChange(val: string) {
+    typedQueryRef.current = val;
     setQuery(val);
     setShowSuggestions(true);
     setActiveIndex(-1);
@@ -64,18 +66,27 @@ export default function SearchInterface({ username }: { username: string }) {
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
   }
 
+  function navigateToIndex(newIndex: number) {
+    setActiveIndex(newIndex);
+    const name = newIndex === -1 ? typedQueryRef.current : suggestions[newIndex].name;
+    setQuery(name);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(name), 150);
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!showSuggestions || suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIndex((i) => (i + 1) % suggestions.length);
+      navigateToIndex((activeIndex + 1) % suggestions.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+      navigateToIndex(activeIndex <= 0 ? -1 : activeIndex - 1);
     } else if (e.key === "Enter" && activeIndex >= 0) {
       e.preventDefault();
       pickSuggestion(suggestions[activeIndex].name);
     } else if (e.key === "Escape") {
+      setQuery(typedQueryRef.current);
       setShowSuggestions(false);
       setActiveIndex(-1);
     }
