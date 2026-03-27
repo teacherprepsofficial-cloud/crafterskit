@@ -58,13 +58,10 @@ export async function POST(req: NextRequest) {
   );
 
   if (!ravelryRes.ok) {
-    const body = await ravelryRes.text();
-    return NextResponse.json({
-      error: "Ravelry API error",
-      ravelryStatus: ravelryRes.status,
-      ravelryBody: body,
-      tokenLen: session.accessToken?.length ?? 0
-    }, { status: 502 });
+    if (ravelryRes.status === 403) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
   }
 
   const data = await ravelryRes.json();
