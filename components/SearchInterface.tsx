@@ -55,6 +55,8 @@ export default function SearchInterface({ username }: { username: string }) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
   const [interpretedAs, setInterpretedAs] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
@@ -111,24 +113,49 @@ export default function SearchInterface({ username }: { username: string }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  function loadImageFile(file: File) {
+    if (!file.type.startsWith("image/")) return;
     setQuery("");
     typedQueryRef.current = "";
     setSuggestions([]);
-
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
       setImagePreview(dataUrl);
-      // Extract base64 and mimeType from data URL
       const [meta, base64] = dataUrl.split(",");
       const mimeType = meta.match(/:(.*?);/)?.[1] ?? "image/jpeg";
       setImageData({ base64, mimeType });
     };
     reader.readAsDataURL(file);
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) loadImageFile(file);
+  }
+
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types.includes("Files")) setDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setDragging(false);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounterRef.current = 0;
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) loadImageFile(file);
   }
 
   // Close suggestions on outside click
@@ -198,7 +225,24 @@ export default function SearchInterface({ username }: { username: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div
+      className="min-h-screen bg-gray-50 relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Full-page drop overlay */}
+      {dragging && (
+        <div className="fixed inset-0 z-50 bg-[#9b2335]/10 border-4 border-dashed border-[#9b2335] flex items-center justify-center pointer-events-none">
+          <div className="bg-white rounded-2xl px-10 py-8 shadow-xl flex flex-col items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#9b2335]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+            </svg>
+            <p className="text-lg font-semibold text-gray-800">Drop image to search</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">CraftersKit</h1>
@@ -350,3 +394,4 @@ export default function SearchInterface({ username }: { username: string }) {
     </div>
   );
 }
+
