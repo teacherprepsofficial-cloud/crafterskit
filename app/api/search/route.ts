@@ -15,12 +15,13 @@ Ravelry /patterns/search.json accepts these query params:
 - craft: "knitting" | "crochet" | "weaving" | "machine knitting"
 - weight: "fingering" | "sport" | "dk" | "worsted" | "aran" | "bulky" | "super_bulky" | "cobweb" | "lace" | "thread" | "light_fingering"
 - fit: "baby" | "toddler" | "child" | "adult" | "not-specified"
-- pa: pattern attribute slugs (comma-separated), e.g. "cables", "colorwork", "lace", "textured"
+- pc: pattern category permalink — e.g. "hat" | "sock" | "pullover" | "cardigan" | "vest" | "shawl-wrap" | "cowl" | "scarf" | "mitten-glove" | "blanket-throw" | "toy" | "bag" | "baby"
+- pa: pattern attribute slugs (space-separated) — e.g. "cables colorwork" | "lace" | "fair-isle seamless" | "top-down" | "in-the-round" | "brioche" | "short-rows"
 - availability: "free" | "ravelry" | "purchase"
-- sort: "best" | "popularity" | "recently" | "projects" | "rating" | "created"
+- sort: "best" | "popularity" | "recently" | "hot" | "projects" | "favorited" | "queued" | "rating" | "created" | "difficulty"
 
 Return ONLY a valid JSON object with the search params. No explanation. No markdown. Example:
-{"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"popularity"}`;
+{"craft":"knitting","weight":"worsted","pa":"cables","pc":"pullover","query":"sweater","sort":"popularity"}`;
 
 const IMAGE_PROMPT = `Look at this image carefully. Identify the SPECIFIC type of garment or knitted/crocheted item shown.
 
