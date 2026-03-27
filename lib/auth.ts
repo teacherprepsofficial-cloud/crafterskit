@@ -17,7 +17,7 @@ function RavelryProvider(options: OAuthUserConfig<RavelryProfile>): OAuth2Config
     authorization: {
       url: "https://www.ravelry.com/oauth2/auth",
       params: {
-        scope: "offline library-pdf",
+        scope: "offline",
         response_type: "code",
       },
     },
