@@ -54,7 +54,11 @@ export default function SearchInterface({ username }: { username: string }) {
         window.location.href = "/";
         return;
       }
-      if (!res.ok) throw new Error("Search failed");
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        setError(`ravelry:${e.ravelryStatus} tokenLen:${e.tokenLen} body:${e.ravelryBody}`);
+        return;
+      }
       const data: SearchResponse = await res.json();
       setResults(data.patterns || []);
       setTotal(data.paginator?.results || 0);

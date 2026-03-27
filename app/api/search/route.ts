@@ -58,7 +58,13 @@ export async function POST(req: NextRequest) {
   );
 
   if (!ravelryRes.ok) {
-    return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
+    const body = await ravelryRes.text();
+    return NextResponse.json({
+      error: "Ravelry API error",
+      ravelryStatus: ravelryRes.status,
+      ravelryBody: body,
+      tokenLen: session.accessToken?.length ?? 0
+    }, { status: 502 });
   }
 
   const data = await ravelryRes.json();
