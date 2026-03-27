@@ -26,14 +26,21 @@ interface Suggestion {
   designer: string;
 }
 
-const CHIPS = [
-  "free crochet blanket using bulky yarn, beginner friendly",
-  "adult sweater with cables, worsted weight",
-  "quick baby hat in fingering weight, free",
-  "colorwork mittens, sport weight, Nordic style",
-  "beginner shawl under 400 yards",
-  "DK weight cardigan for women, top down",
-];
+
+function highlightSuggestion(name: string, typed: string) {
+  const t = typed.trim();
+  if (!t) return <span>{name}</span>;
+  const lower = name.toLowerCase();
+  const idx = lower.indexOf(t.toLowerCase());
+  if (idx === -1) return <strong>{name}</strong>;
+  return (
+    <>
+      {idx > 0 && <strong>{name.slice(0, idx)}</strong>}
+      <span>{name.slice(idx, idx + t.length)}</span>
+      {idx + t.length < name.length && <strong>{name.slice(idx + t.length)}</strong>}
+    </>
+  );
+}
 
 export default function SearchInterface({ username }: { username: string }) {
   const [query, setQuery] = useState("");
@@ -275,7 +282,7 @@ export default function SearchInterface({ username }: { username: string }) {
                       onMouseEnter={() => setActiveIndex(i)}
                       className={`w-full text-left px-4 py-2.5 border-b border-gray-100 last:border-0 ${i === activeIndex ? "bg-gray-100" : "hover:bg-gray-50"}`}
                     >
-                      <span className="text-sm font-medium text-gray-900">{s.name}</span>
+                      <span className="text-sm text-gray-900">{highlightSuggestion(s.name, typedQueryRef.current)}</span>
                       {s.designer && (
                         <span className="text-xs text-gray-400 ml-2">by {s.designer}</span>
                       )}
@@ -293,20 +300,6 @@ export default function SearchInterface({ username }: { username: string }) {
             </button>
           </form>
 
-          {/* Suggestion chips */}
-          {!results && !imagePreview && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {CHIPS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => { setQuery(s); handleSearch(s); }}
-                  className="text-sm bg-white border border-gray-200 text-gray-600 hover:border-[#9b2335] hover:text-[#9b2335] px-3 py-1.5 rounded-full transition-colors"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Error */}
