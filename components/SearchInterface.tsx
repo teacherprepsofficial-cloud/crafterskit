@@ -67,38 +67,15 @@ const WEIGHT_OPTIONS = [
   { value: "jumbo", label: "Jumbo" },
 ];
 
-const CATEGORY_CHIPS = [
-  { label: "Hats", pc: "hat", emoji: "🎩" },
-  { label: "Socks", pc: "sock", emoji: "🧦" },
-  { label: "Pullovers", pc: "pullover", emoji: "🧥" },
-  { label: "Cardigans", pc: "cardigan", emoji: "🥼" },
-  { label: "Shawls", pc: "shawl-wrap", emoji: "🌊" },
-  { label: "Cowls", pc: "cowl", emoji: "🌀" },
-  { label: "Mittens", pc: "mitten-glove", emoji: "🧤" },
-  { label: "Scarves", pc: "scarf", emoji: "🧣" },
-  { label: "Vests", pc: "vest", emoji: "🦺" },
-  { label: "Baby", pc: "baby", emoji: "👶" },
-  { label: "Blankets", pc: "blanket-throw", emoji: "🛏" },
-  { label: "Bags", pc: "bag", emoji: "👜" },
-  { label: "Toys", pc: "toy", emoji: "🧸" },
-];
-
-const TECHNIQUE_CHIPS = [
-  { label: "Cables", pa: "cables" },
-  { label: "Colorwork", pa: "colorwork" },
-  { label: "Lace", pa: "lace" },
-  { label: "Fair Isle", pa: "fair-isle" },
-  { label: "Stripes", pa: "stripes" },
-  { label: "Seamless", pa: "seamless" },
-  { label: "Top Down", pa: "top-down" },
-  { label: "Bottom Up", pa: "bottom-up" },
-  { label: "In the Round", pa: "in-the-round" },
-  { label: "Toe Up", pa: "toe-up" },
-  { label: "Brioche", pa: "brioche" },
-  { label: "Short Rows", pa: "short-rows" },
-  { label: "Double Knitting", pa: "double-knitting" },
-  { label: "Charts", pa: "charts-included" },
-];
+const CATEGORY_EMOJI: Record<string, string> = {
+  hat: "🎩", sock: "🧦", pullover: "🧥", cardigan: "🥼",
+  "shawl-wrap": "🌊", cowl: "🌀", "mitten-glove": "🧤", scarf: "🧣",
+  vest: "🦺", blanket: "🛏", "blanket-throw": "🛏", bag: "👜", toy: "🧸",
+  baby: "👶", "baby-toddler": "👶", dress: "👗", skirt: "🩱", top: "👚",
+  shrug: "🧣", poncho: "🧥", "arm-warmers": "🧤", socks: "🧦",
+  legwarmers: "🦵", slippers: "🩴", mittens: "🧤", gloves: "🧤",
+  hoodie: "🧥", jacket: "🥼",
+};
 
 function highlightSuggestion(name: string, typed: string) {
   const t = typed.trim();
@@ -133,6 +110,24 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+interface RavCategory {
+  id: number;
+  name: string;
+  permalink: string;
+  parent: string;
+}
+
+interface RavAttr {
+  id: number;
+  name: string;
+  permalink: string;
+}
+
+interface RavAttrGroup {
+  groupName: string;
+  attrs: RavAttr[];
+}
+
 export default function SearchInterface({ username }: { username: string | null }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Pattern[] | null>(null);
@@ -149,6 +144,8 @@ export default function SearchInterface({ username }: { username: string | null 
   const [filters, setFilters] = useState<Filters>({
     sort: "", craft: "", availability: "", weight: "", pc: "", pa: "",
   });
+  const [categories, setCategories] = useState<RavCategory[]>([]);
+  const [attrGroups, setAttrGroups] = useState<RavAttrGroup[]>([]);
 
   const dragCounterRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -261,6 +258,15 @@ export default function SearchInterface({ username }: { username: string | null 
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setCategories(d.categories ?? []));
+    fetch("/api/attributes")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setAttrGroups(d.groups ?? []));
   }, []);
 
   async function handleSearch(
@@ -468,50 +474,57 @@ export default function SearchInterface({ username }: { username: string | null 
         </div>
 
         {/* Category chips — "What are you making?" */}
-        <div className="mb-4">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">What are you making?</p>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_CHIPS.map((c) => (
-              <button
-                key={c.pc}
-                type="button"
-                onClick={() => handleCategoryClick(c.pc)}
-                className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                  filters.pc === c.pc
-                    ? "bg-[#9b2335] text-white border-[#9b2335]"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
-                }`}
-              >
-                <span>{c.emoji}</span>
-                <span>{c.label}</span>
-              </button>
-            ))}
+        {categories.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">What are you making?</p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((c) => {
+                const emoji = CATEGORY_EMOJI[c.permalink];
+                return (
+                  <button
+                    key={c.permalink}
+                    type="button"
+                    onClick={() => handleCategoryClick(c.permalink)}
+                    className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                      filters.pc === c.permalink
+                        ? "bg-[#9b2335] text-white border-[#9b2335]"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
+                    }`}
+                  >
+                    {emoji && <span>{emoji}</span>}
+                    <span>{c.name}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Technique chips */}
-        <div className="mb-5">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Techniques</p>
-          <div className="flex flex-wrap gap-2">
-            {TECHNIQUE_CHIPS.map((t) => {
-              const active = activeTechniques.includes(t.pa);
-              return (
-                <button
-                  key={t.pa}
-                  type="button"
-                  onClick={() => toggleTechnique(t.pa)}
-                  className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                    active
-                      ? "bg-[#9b2335] text-white border-[#9b2335]"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
+        {/* Attribute chips — grouped by type */}
+        {attrGroups.map((group) => (
+          <div key={group.groupName} className="mb-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{group.groupName}</p>
+            <div className="flex flex-wrap gap-2">
+              {group.attrs.map((attr) => {
+                const active = activeTechniques.includes(attr.permalink);
+                return (
+                  <button
+                    key={attr.permalink}
+                    type="button"
+                    onClick={() => toggleTechnique(attr.permalink)}
+                    className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                      active
+                        ? "bg-[#9b2335] text-white border-[#9b2335]"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
+                    }`}
+                  >
+                    {attr.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ))}
 
         {/* Filter bar */}
         <div className="flex flex-wrap gap-2 mb-6 items-center">

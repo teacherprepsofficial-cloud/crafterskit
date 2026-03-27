@@ -90,11 +90,11 @@ export async function POST(req: NextRequest) {
 
   if (image && mimeType) {
     searchParams = await buildSearchParamsFromImage(image, mimeType);
-  } else {
-    if (!query?.trim()) {
-      return NextResponse.json({ error: "Query required" }, { status: 400 });
-    }
+  } else if (query?.trim()) {
     searchParams = await buildSearchParams(query);
+  } else {
+    // Filter-only search (e.g. category chip click with no text) — skip Claude
+    searchParams = {};
   }
 
   // Apply user's explicit filters on top of Claude's output (non-empty values win)
