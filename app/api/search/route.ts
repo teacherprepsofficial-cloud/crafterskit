@@ -18,18 +18,17 @@ Ravelry /patterns/search.json accepts these query params:
 Return ONLY a valid JSON object with the search params. No explanation. No markdown. Example:
 {"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"popularity"}`;
 
-const IMAGE_PROMPT = `Analyze this image of a knitted or crocheted garment/item and extract Ravelry pattern search parameters.
+const IMAGE_PROMPT = `Analyze this image and identify what knitting or crochet pattern someone would search for to make this item.
 
-Look for:
-- Is it knitting or crochet?
-- What type of item is it? (sweater, hat, shawl, socks, blanket, etc.)
-- What stitch patterns are visible? (cables, colorwork, lace, ribbing, textured, etc.)
-- Estimate the yarn weight from the fabric density (fingering/sport/dk/worsted/aran/bulky)
-- Who is it for? (baby, child, adult)
-- Any other distinctive features
+Focus only on:
+1. Is it knitting or crochet? (if unclear, omit craft)
+2. What is the garment/item type? (e.g. "mini skirt", "cardigan", "beanie", "shawl", "socks")
+3. Any highly visible, defining feature (e.g. "cable", "colorwork", "lace") — only if clearly visible
 
-Return ONLY a valid JSON object with Ravelry search params. No explanation. No markdown. Example:
-{"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"best"}`;
+Return ONLY a JSON object with "query", optionally "craft", and "sort":"popularity". Keep "query" short (2-4 words max — just the item type and one key feature if obvious). Do NOT include weight, fit, or pa unless you are certain. Fewer params = more results.
+
+Example for a plain blue mini skirt: {"craft":"knitting","query":"mini skirt","sort":"popularity"}
+Example for a cable sweater: {"craft":"knitting","query":"cable sweater","sort":"popularity"}`;
 
 async function buildSearchParams(userQuery: string): Promise<Record<string, string>> {
   const message = await anthropic.messages.create({
@@ -88,19 +87,14 @@ export async function POST(req: NextRequest) {
     searchParams = await buildSearchParams(query);
   }
 
-  const params = new URLSearchParams({
-    ...searchParams,
-    page_size: "20",
-  });
+  async function ravelrySearch(p: Record<string, string>) {
+    return fetch(
+      `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
+      { headers: { Authorization: `Bearer ${session!.accessToken}` } }
+    );
+  }
 
-  const ravelryRes = await fetch(
-    `https://api.ravelry.com/patterns/search.json?${params}`,
-    {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  let ravelryRes = await ravelrySearch(searchParams);
 
   if (!ravelryRes.ok) {
     if (ravelryRes.status === 403) {
@@ -109,6 +103,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
   }
 
-  const data = await ravelryRes.json();
+  let data = await ravelryRes.json();
+
+  // If image search returned too few results, retry with just query + sort
+  if (image && mimeType && (data.patterns?.length ?? 0) < 4 && searchParams.query) {
+    const fallback = { query: searchParams.query, sort: "popularity" };
+    const retryRes = await ravelrySearch(fallback);
+    if (retryRes.ok) {
+      const retryData = await retryRes.json();
+      if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
+        data = retryData;
+      }
+    }
+  }
+
   return NextResponse.json(data);
 }
