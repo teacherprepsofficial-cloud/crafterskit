@@ -28,55 +28,6 @@ interface Suggestion {
   designer: string;
 }
 
-interface Filters {
-  sort: string;
-  craft: string;
-  availability: string;
-  weight: string;
-  pc: string;
-  pa: string; // space-separated attribute slugs
-}
-
-const SORT_OPTIONS = [
-  { value: "", label: "Sort by..." },
-  { value: "best", label: "Best match" },
-  { value: "hot", label: "Hot right now" },
-  { value: "recently", label: "New to Ravelry" },
-  { value: "popularity", label: "Most popular" },
-  { value: "projects", label: "Most projects" },
-  { value: "favorited", label: "Most favorites" },
-  { value: "queued", label: "Most queued" },
-  { value: "rating", label: "Rating" },
-  { value: "created", label: "Publication date" },
-  { value: "difficulty", label: "Difficulty" },
-];
-
-const WEIGHT_OPTIONS = [
-  { value: "", label: "Any weight" },
-  { value: "thread", label: "Thread" },
-  { value: "cobweb", label: "Cobweb" },
-  { value: "lace", label: "Lace" },
-  { value: "light_fingering", label: "Light Fingering" },
-  { value: "fingering", label: "Fingering" },
-  { value: "sport", label: "Sport" },
-  { value: "dk", label: "DK" },
-  { value: "worsted", label: "Worsted" },
-  { value: "aran", label: "Aran" },
-  { value: "bulky", label: "Bulky" },
-  { value: "super_bulky", label: "Super Bulky" },
-  { value: "jumbo", label: "Jumbo" },
-];
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  hat: "🎩", sock: "🧦", pullover: "🧥", cardigan: "🥼",
-  "shawl-wrap": "🌊", cowl: "🌀", "mitten-glove": "🧤", scarf: "🧣",
-  vest: "🦺", blanket: "🛏", "blanket-throw": "🛏", bag: "👜", toy: "🧸",
-  baby: "👶", "baby-toddler": "👶", dress: "👗", skirt: "🩱", top: "👚",
-  shrug: "🧣", poncho: "🧥", "arm-warmers": "🧤", socks: "🧦",
-  legwarmers: "🦵", slippers: "🩴", mittens: "🧤", gloves: "🧤",
-  hoodie: "🧥", jacket: "🥼",
-};
-
 function highlightSuggestion(name: string, typed: string) {
   const t = typed.trim();
   if (!t) return <span>{name}</span>;
@@ -110,24 +61,6 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-interface RavCategory {
-  id: number;
-  name: string;
-  permalink: string;
-  parent: string;
-}
-
-interface RavAttr {
-  id: number;
-  name: string;
-  permalink: string;
-}
-
-interface RavAttrGroup {
-  groupName: string;
-  attrs: RavAttr[];
-}
-
 export default function SearchInterface({ username }: { username: string | null }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Pattern[] | null>(null);
@@ -141,11 +74,6 @@ export default function SearchInterface({ username }: { username: string | null 
   const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
   const [interpretedAs, setInterpretedAs] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [filters, setFilters] = useState<Filters>({
-    sort: "", craft: "", availability: "", weight: "", pc: "", pa: "",
-  });
-  const [categories, setCategories] = useState<RavCategory[]>([]);
-  const [attrGroups, setAttrGroups] = useState<RavAttrGroup[]>([]);
 
   const dragCounterRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -260,22 +188,9 @@ export default function SearchInterface({ username }: { username: string | null 
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => d && setCategories(d.categories ?? []));
-    fetch("/api/attributes")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => d && setAttrGroups(d.groups ?? []));
-  }, []);
-
-  async function handleSearch(
-    q: string,
-    imgData?: { base64: string; mimeType: string } | null,
-    activeFilters: Filters = filters
-  ) {
+  async function handleSearch(q: string, imgData?: { base64: string; mimeType: string } | null) {
     const searchImage = imgData !== undefined ? imgData : imageDataRef.current;
-    if (!q.trim() && !searchImage && !activeFilters.pc) return;
+    if (!q.trim() && !searchImage) return;
     setShowSuggestions(false);
     setSuggestions([]);
     setLoading(true);
@@ -285,8 +200,8 @@ export default function SearchInterface({ username }: { username: string | null 
 
     try {
       const body = searchImage
-        ? { image: searchImage.base64, mimeType: searchImage.mimeType, filters: activeFilters }
-        : { query: q, filters: activeFilters };
+        ? { image: searchImage.base64, mimeType: searchImage.mimeType }
+        : { query: q };
 
       const res = await fetch("/api/search", {
         method: "POST",
@@ -319,42 +234,6 @@ export default function SearchInterface({ username }: { username: string | null 
     setActiveIndex(-1);
     handleSearch(name);
   }
-
-  function handleFilterChange(key: keyof Filters, value: string) {
-    const newVal = key !== "sort" && key !== "pa" && filters[key] === value ? "" : value;
-    const newFilters = { ...filters, [key]: newVal };
-    setFilters(newFilters);
-    if (results !== null || loading) {
-      handleSearch(query, undefined, newFilters);
-    }
-  }
-
-  function handleCategoryClick(pc: string) {
-    const newVal = filters.pc === pc ? "" : pc;
-    const newFilters = { ...filters, pc: newVal };
-    setFilters(newFilters);
-    // Category clicks always trigger a search
-    handleSearch(query, undefined, newFilters);
-  }
-
-  function toggleTechnique(pa: string) {
-    const current = filters.pa ? filters.pa.split(" ").filter(Boolean) : [];
-    const next = current.includes(pa) ? current.filter(s => s !== pa) : [...current, pa];
-    const newFilters = { ...filters, pa: next.join(" ") };
-    setFilters(newFilters);
-    if (results !== null || loading) {
-      handleSearch(query, undefined, newFilters);
-    }
-  }
-
-  function clearAllFilters() {
-    const cleared: Filters = { sort: "", craft: "", availability: "", weight: "", pc: "", pa: "" };
-    setFilters(cleared);
-    if (results !== null) handleSearch(query, undefined, cleared);
-  }
-
-  const activeFilterCount = Object.values(filters).filter(Boolean).length;
-  const activeTechniques = filters.pa ? filters.pa.split(" ").filter(Boolean) : [];
 
   return (
     <div
@@ -396,7 +275,7 @@ export default function SearchInterface({ username }: { username: string | null 
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Search box */}
-        <div className="mb-5">
+        <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Find your next pattern</h2>
           <p className="text-gray-500 mb-4">
             Describe what you want, or upload a photo of a garment to find its pattern.
@@ -465,115 +344,12 @@ export default function SearchInterface({ username }: { username: string | null 
             </div>
             <button
               type="submit"
-              disabled={loading || (!query.trim() && !imageData && !filters.pc)}
+              disabled={loading || (!query.trim() && !imageData)}
               className="bg-[#9b2335] hover:bg-[#7d1c2a] disabled:bg-gray-300 text-white font-semibold px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
             >
               {loading ? "Searching..." : "Search"}
             </button>
           </form>
-        </div>
-
-        {/* Category chips — "What are you making?" */}
-        {categories.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">What are you making?</p>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((c) => {
-                const emoji = CATEGORY_EMOJI[c.permalink];
-                return (
-                  <button
-                    key={c.permalink}
-                    type="button"
-                    onClick={() => handleCategoryClick(c.permalink)}
-                    className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                      filters.pc === c.permalink
-                        ? "bg-[#9b2335] text-white border-[#9b2335]"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
-                    }`}
-                  >
-                    {emoji && <span>{emoji}</span>}
-                    <span>{c.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Attribute chips — grouped by type */}
-        {attrGroups.map((group) => (
-          <div key={group.groupName} className="mb-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">{group.groupName}</p>
-            <div className="flex flex-wrap gap-2">
-              {group.attrs.map((attr) => {
-                const active = activeTechniques.includes(attr.permalink);
-                return (
-                  <button
-                    key={attr.permalink}
-                    type="button"
-                    onClick={() => toggleTechnique(attr.permalink)}
-                    className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-                      active
-                        ? "bg-[#9b2335] text-white border-[#9b2335]"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-[#9b2335] hover:text-[#9b2335]"
-                    }`}
-                  >
-                    {attr.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-2 mb-6 items-center">
-          <select
-            value={filters.sort}
-            onChange={(e) => handleFilterChange("sort", e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-
-          <div className="flex rounded-lg overflow-hidden border border-gray-300 text-sm">
-            <button
-              type="button"
-              onClick={() => handleFilterChange("craft", "knitting")}
-              className={`px-3 py-2 transition-colors ${filters.craft === "knitting" ? "bg-[#9b2335] text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
-            >Knitting</button>
-            <button
-              type="button"
-              onClick={() => handleFilterChange("craft", "crochet")}
-              className={`px-3 py-2 border-l border-gray-300 transition-colors ${filters.craft === "crochet" ? "bg-[#9b2335] text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
-            >Crochet</button>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => handleFilterChange("availability", "free")}
-            className={`text-sm px-3 py-2 rounded-lg border transition-colors ${filters.availability === "free" ? "bg-[#9b2335] text-white border-[#9b2335]" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
-          >Free only</button>
-
-          <select
-            value={filters.weight}
-            onChange={(e) => handleFilterChange("weight", e.target.value)}
-            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
-          >
-            {WEIGHT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-
-          {activeFilterCount > 0 && (
-            <button
-              type="button"
-              onClick={clearAllFilters}
-              className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
-            >Clear all</button>
-          )}
         </div>
 
         {/* Interpreted as */}
