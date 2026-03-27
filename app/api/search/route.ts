@@ -111,8 +111,7 @@ export async function POST(req: NextRequest) {
     let ravelryRes = await ravelrySearch(ravelryParams);
 
     if (!ravelryRes.ok) {
-      const errBody = await ravelryRes.text().catch(() => "");
-      return NextResponse.json({ error: "Ravelry API error", status: ravelryRes.status, body: errBody }, { status: 502 });
+      return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
     }
 
     let data = await ravelryRes.json();
