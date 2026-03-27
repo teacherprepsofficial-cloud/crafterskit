@@ -55,19 +55,20 @@ export async function POST(req: NextRequest) {
     page_size: "20",
   });
 
-  const ravelryRes = await fetch(
-    `https://api.ravelry.com/patterns/search.json?${params}`,
-    {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    }
-  );
+  const ravelryUrl = `https://api.ravelry.com/patterns/search.json?${params}`;
+  console.log("Ravelry URL:", ravelryUrl);
+  console.log("Token length:", session.accessToken?.length, "prefix:", session.accessToken?.substring(0, 8));
+
+  const ravelryRes = await fetch(ravelryUrl, {
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+  });
 
   if (!ravelryRes.ok) {
     const body = await ravelryRes.text();
     console.error("Ravelry error:", ravelryRes.status, body);
-    return NextResponse.json({ error: "Ravelry API error", status: ravelryRes.status, detail: body }, { status: 502 });
+    return NextResponse.json({ error: "Ravelry API error", status: ravelryRes.status, detail: body || `HTTP ${ravelryRes.status}`, url: ravelryUrl }, { status: 502 });
   }
 
   const data = await ravelryRes.json();
