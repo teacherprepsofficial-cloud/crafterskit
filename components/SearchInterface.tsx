@@ -27,12 +27,12 @@ interface Suggestion {
 }
 
 const CHIPS = [
-  "cozy oversized sweater with cables, worsted weight",
-  "quick baby hat in fingering weight",
-  "lace shawl for beginners, free pattern",
-  "crochet granny square blanket",
-  "colorwork mittens with Nordic pattern",
-  "simple ribbed socks, DK weight",
+  "free crochet blanket using bulky yarn, beginner friendly",
+  "adult sweater with cables, worsted weight",
+  "quick baby hat in fingering weight, free",
+  "colorwork mittens, sport weight, Nordic style",
+  "beginner shawl under 400 yards",
+  "DK weight cardigan for women, top down",
 ];
 
 export default function SearchInterface({ username }: { username: string }) {
@@ -44,9 +44,12 @@ export default function SearchInterface({ username }: { username: string }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const typedQueryRef = useRef("");
 
   const fetchSuggestions = useCallback(async (q: string) => {
@@ -62,6 +65,7 @@ export default function SearchInterface({ username }: { username: string }) {
     setQuery(val);
     setShowSuggestions(true);
     setActiveIndex(-1);
+    if (val) clearImage();
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
   }
@@ -92,6 +96,32 @@ export default function SearchInterface({ username }: { username: string }) {
     }
   }
 
+  function clearImage() {
+    setImagePreview(null);
+    setImageData(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setQuery("");
+    typedQueryRef.current = "";
+    setSuggestions([]);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const dataUrl = ev.target?.result as string;
+      setImagePreview(dataUrl);
+      // Extract base64 and mimeType from data URL
+      const [meta, base64] = dataUrl.split(",");
+      const mimeType = meta.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+      setImageData({ base64, mimeType });
+    };
+    reader.readAsDataURL(file);
+  }
+
   // Close suggestions on outside click
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -108,8 +138,9 @@ export default function SearchInterface({ username }: { username: string }) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  async function handleSearch(q: string) {
-    if (!q.trim()) return;
+  async function handleSearch(q: string, imgData?: { base64: string; mimeType: string } | null) {
+    const searchImage = imgData ?? imageData;
+    if (!q.trim() && !searchImage) return;
     setShowSuggestions(false);
     setSuggestions([]);
     setLoading(true);
@@ -117,10 +148,14 @@ export default function SearchInterface({ username }: { username: string }) {
     setResults(null);
 
     try {
+      const body = searchImage
+        ? { image: searchImage.base64, mimeType: searchImage.mimeType }
+        : { query: q };
+
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
+        body: JSON.stringify(body),
       });
 
       if (res.status === 401) {
@@ -174,8 +209,27 @@ export default function SearchInterface({ username }: { username: string }) {
             Find your next pattern
           </h2>
           <p className="text-gray-500 mb-4">
-            Describe what you want in plain English — no filters needed.
+            Describe what you want, or upload a photo of a garment to find its pattern.
           </p>
+
+          {/* Image preview */}
+          {imagePreview && (
+            <div className="mb-3 flex items-center gap-3">
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagePreview} alt="Search by image" className="h-16 w-16 object-cover rounded-lg border border-gray-200" />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute -top-1.5 -right-1.5 bg-gray-700 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none"
+                >
+                  ×
+                </button>
+              </div>
+              <span className="text-sm text-gray-500">Searching by image…</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="flex gap-2 relative">
             <div className="flex-1 relative">
               <input
@@ -185,8 +239,28 @@ export default function SearchInterface({ username }: { username: string }) {
                 onChange={(e) => handleQueryChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder="e.g. cozy cabled sweater in worsted weight for women"
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
+                placeholder={imagePreview ? "Image selected — hit Search" : "e.g. cozy cabled sweater in worsted weight for women"}
+                disabled={!!imagePreview}
+                className="w-full border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
+              />
+              {/* Camera button inside input */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#9b2335] transition-colors"
+                title="Search by image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                </svg>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
               />
               {showSuggestions && suggestions.length > 0 && (
                 <div
@@ -212,7 +286,7 @@ export default function SearchInterface({ username }: { username: string }) {
             </div>
             <button
               type="submit"
-              disabled={loading || !query.trim()}
+              disabled={loading || (!query.trim() && !imageData)}
               className="bg-[#9b2335] hover:bg-[#7d1c2a] disabled:bg-gray-300 text-white font-semibold px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
             >
               {loading ? "Searching..." : "Search"}
@@ -220,7 +294,7 @@ export default function SearchInterface({ username }: { username: string }) {
           </form>
 
           {/* Suggestion chips */}
-          {!results && (
+          {!results && !imagePreview && (
             <div className="flex flex-wrap gap-2 mt-3">
               {CHIPS.map((s) => (
                 <button

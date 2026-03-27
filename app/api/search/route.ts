@@ -18,6 +18,19 @@ Ravelry /patterns/search.json accepts these query params:
 Return ONLY a valid JSON object with the search params. No explanation. No markdown. Example:
 {"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"popularity"}`;
 
+const IMAGE_PROMPT = `Analyze this image of a knitted or crocheted garment/item and extract Ravelry pattern search parameters.
+
+Look for:
+- Is it knitting or crochet?
+- What type of item is it? (sweater, hat, shawl, socks, blanket, etc.)
+- What stitch patterns are visible? (cables, colorwork, lace, ribbing, textured, etc.)
+- Estimate the yarn weight from the fabric density (fingering/sport/dk/worsted/aran/bulky)
+- Who is it for? (baby, child, adult)
+- Any other distinctive features
+
+Return ONLY a valid JSON object with Ravelry search params. No explanation. No markdown. Example:
+{"craft":"knitting","weight":"worsted","pa":"cables","query":"sweater","sort":"best"}`;
+
 async function buildSearchParams(userQuery: string): Promise<Record<string, string>> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
@@ -30,18 +43,50 @@ async function buildSearchParams(userQuery: string): Promise<Record<string, stri
   return JSON.parse(text);
 }
 
+async function buildSearchParamsFromImage(imageBase64: string, mimeType: string): Promise<Record<string, string>> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 256,
+    system: SYSTEM_PROMPT,
+    messages: [{
+      role: "user",
+      content: [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+            data: imageBase64,
+          },
+        },
+        { type: "text", text: IMAGE_PROMPT },
+      ],
+    }],
+  });
+
+  const text = message.content[0].type === "text" ? message.content[0].text : "{}";
+  return JSON.parse(text);
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.accessToken) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const { query } = await req.json();
-  if (!query?.trim()) {
-    return NextResponse.json({ error: "Query required" }, { status: 400 });
-  }
+  const body = await req.json();
+  const { query, image, mimeType } = body;
 
-  const searchParams = await buildSearchParams(query);
+  let searchParams: Record<string, string>;
+
+  if (image && mimeType) {
+    searchParams = await buildSearchParamsFromImage(image, mimeType);
+  } else {
+    if (!query?.trim()) {
+      return NextResponse.json({ error: "Query required" }, { status: 400 });
+    }
+    searchParams = await buildSearchParams(query);
+  }
 
   const params = new URLSearchParams({
     ...searchParams,
