@@ -54,16 +54,12 @@ export default function SearchInterface({ username }: { username: string }) {
         window.location.href = "/";
         return;
       }
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        setError(`Error: ${errData.error ?? "unknown"} — status:${errData.status} — ${errData.url ?? errData.detail}`);
-        return;
-      }
+      if (!res.ok) throw new Error("Search failed");
       const data: SearchResponse = await res.json();
       setResults(data.patterns || []);
       setTotal(data.paginator?.results || 0);
-    } catch (e) {
-      setError(`Something went wrong: ${String(e)}`);
+    } catch {
+      setError("Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }

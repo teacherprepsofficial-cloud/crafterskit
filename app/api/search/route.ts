@@ -10,7 +10,6 @@ Ravelry /patterns/search.json accepts these query params:
 - query: keyword search string
 - craft: "knitting" | "crochet" | "weaving" | "machine knitting"
 - weight: "fingering" | "sport" | "dk" | "worsted" | "aran" | "bulky" | "super_bulky" | "cobweb" | "lace" | "thread" | "light_fingering"
-- pc: pattern category slug (e.g. "knitting-projects--accessories--hats" or "knitting-projects--garments--sweaters")
 - fit: "baby" | "toddler" | "child" | "adult" | "not-specified"
 - pa: pattern attribute slugs (comma-separated), e.g. "cables", "colorwork", "lace", "textured"
 - availability: "free" | "ravelry" | "purchase"
@@ -42,33 +41,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query required" }, { status: 400 });
   }
 
-  let searchParams: Record<string, string>;
-  try {
-    searchParams = await buildSearchParams(query);
-  } catch (e) {
-    console.error("Anthropic error:", e);
-    return NextResponse.json({ error: "Anthropic failed", detail: String(e) }, { status: 502 });
-  }
+  const searchParams = await buildSearchParams(query);
 
   const params = new URLSearchParams({
     ...searchParams,
     page_size: "20",
   });
 
-  const ravelryUrl = `https://api.ravelry.com/patterns/search.json?${params}`;
-  console.log("Ravelry URL:", ravelryUrl);
-  console.log("Token length:", session.accessToken?.length, "prefix:", session.accessToken?.substring(0, 8));
-
-  const ravelryRes = await fetch(ravelryUrl, {
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-    },
-  });
+  const ravelryRes = await fetch(
+    `https://api.ravelry.com/patterns/search.json?${params}`,
+    {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    }
+  );
 
   if (!ravelryRes.ok) {
-    const body = await ravelryRes.text();
-    console.error("Ravelry error:", ravelryRes.status, body);
-    return NextResponse.json({ error: "Ravelry API error", status: ravelryRes.status, detail: body || `HTTP ${ravelryRes.status}`, url: ravelryUrl }, { status: 502 });
+    return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
   }
 
   const data = await ravelryRes.json();
