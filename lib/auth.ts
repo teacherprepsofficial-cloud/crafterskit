@@ -60,8 +60,8 @@ function RavelryProvider(options: OAuthUserConfig<RavelryProfile>): OAuth2Config
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     RavelryProvider({
-      clientId: process.env.RAVELRY_CLIENT_ID!,
-      clientSecret: process.env.RAVELRY_CLIENT_SECRET!,
+      clientId: process.env.RAVELRY_CLIENT_ID!.trim(),
+      clientSecret: process.env.RAVELRY_CLIENT_SECRET!.trim(),
     }),
   ],
   callbacks: {
