@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { signOut } from "next-auth/react";
 import PatternCard from "./PatternCard";
 
@@ -21,7 +21,12 @@ interface SearchResponse {
   paginator: { results: number };
 }
 
-const SUGGESTIONS = [
+interface Suggestion {
+  name: string;
+  designer: string;
+}
+
+const CHIPS = [
   "cozy oversized sweater with cables, worsted weight",
   "quick baby hat in fingering weight",
   "lace shawl for beginners, free pattern",
@@ -36,9 +41,47 @@ export default function SearchInterface({ username }: { username: string }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestBoxRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback(async (q: string) => {
+    if (q.length < 2) { setSuggestions([]); return; }
+    const res = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    setSuggestions(data.suggestions ?? []);
+  }, []);
+
+  function handleQueryChange(val: string) {
+    setQuery(val);
+    setShowSuggestions(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
+  }
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (
+        suggestBoxRef.current &&
+        !suggestBoxRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   async function handleSearch(q: string) {
     if (!q.trim()) return;
+    setShowSuggestions(false);
+    setSuggestions([]);
     setLoading(true);
     setError("");
     setResults(null);
@@ -70,6 +113,13 @@ export default function SearchInterface({ username }: { username: string }) {
     handleSearch(query);
   }
 
+  function pickSuggestion(name: string) {
+    setQuery(name);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    handleSearch(name);
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -95,14 +145,38 @@ export default function SearchInterface({ username }: { username: string }) {
           <p className="text-gray-500 mb-4">
             Describe what you want in plain English — no filters needed.
           </p>
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. cozy cabled sweater in worsted weight for women"
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
-            />
+          <form onSubmit={handleSubmit} className="flex gap-2 relative">
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="e.g. cozy cabled sweater in worsted weight for women"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  ref={suggestBoxRef}
+                  className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden"
+                >
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onMouseDown={() => pickSuggestion(s.name)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0"
+                    >
+                      <span className="text-sm font-medium text-gray-900">{s.name}</span>
+                      {s.designer && (
+                        <span className="text-xs text-gray-400 ml-2">by {s.designer}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               type="submit"
               disabled={loading || !query.trim()}
@@ -115,13 +189,10 @@ export default function SearchInterface({ username }: { username: string }) {
           {/* Suggestion chips */}
           {!results && (
             <div className="flex flex-wrap gap-2 mt-3">
-              {SUGGESTIONS.map((s) => (
+              {CHIPS.map((s) => (
                 <button
                   key={s}
-                  onClick={() => {
-                    setQuery(s);
-                    handleSearch(s);
-                  }}
+                  onClick={() => { setQuery(s); handleSearch(s); }}
                   className="text-sm bg-white border border-gray-200 text-gray-600 hover:border-[#9b2335] hover:text-[#9b2335] px-3 py-1.5 rounded-full transition-colors"
                 >
                   {s}
@@ -132,9 +203,7 @@ export default function SearchInterface({ username }: { username: string }) {
         </div>
 
         {/* Error */}
-        {error && (
-          <p className="text-red-500 text-sm mb-4">{error}</p>
-        )}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
         {/* Loading skeleton */}
         {loading && (
