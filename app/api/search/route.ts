@@ -83,7 +83,7 @@ async function buildSearchParamsFromImage(imageBase64: string, mimeType: string)
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { query, image, mimeType } = body;
+  const { query, image, mimeType, filters: userFilters } = body;
 
   let searchParams: Record<string, string>;
 
@@ -94,6 +94,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Query required" }, { status: 400 });
     }
     searchParams = await buildSearchParams(query);
+  }
+
+  // Apply user's explicit filters on top of Claude's output (non-empty values win)
+  if (userFilters && typeof userFilters === "object") {
+    for (const [k, v] of Object.entries(userFilters)) {
+      if (v && typeof v === "string" && v.trim()) {
+        searchParams[k] = v;
+      }
+    }
   }
 
   async function ravelrySearch(p: Record<string, string>) {

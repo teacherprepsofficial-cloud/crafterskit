@@ -27,6 +27,42 @@ interface Suggestion {
   designer: string;
 }
 
+interface Filters {
+  sort: string;
+  craft: string;
+  availability: string;
+  weight: string;
+}
+
+const SORT_OPTIONS = [
+  { value: "", label: "Sort by..." },
+  { value: "best", label: "Best match" },
+  { value: "hot", label: "Hot right now" },
+  { value: "recently", label: "New to Ravelry" },
+  { value: "popularity", label: "Most popular" },
+  { value: "projects", label: "Most projects" },
+  { value: "favorited", label: "Most favorites" },
+  { value: "queued", label: "Most queued" },
+  { value: "rating", label: "Rating" },
+  { value: "created", label: "Publication date" },
+  { value: "difficulty", label: "Difficulty" },
+];
+
+const WEIGHT_OPTIONS = [
+  { value: "", label: "Any weight" },
+  { value: "thread", label: "Thread" },
+  { value: "cobweb", label: "Cobweb" },
+  { value: "lace", label: "Lace" },
+  { value: "light_fingering", label: "Light Fingering" },
+  { value: "fingering", label: "Fingering" },
+  { value: "sport", label: "Sport" },
+  { value: "dk", label: "DK" },
+  { value: "worsted", label: "Worsted" },
+  { value: "aran", label: "Aran" },
+  { value: "bulky", label: "Bulky" },
+  { value: "super_bulky", label: "Super Bulky" },
+  { value: "jumbo", label: "Jumbo" },
+];
 
 function highlightSuggestion(name: string, typed: string) {
   const t = typed.trim();
@@ -56,12 +92,17 @@ export default function SearchInterface({ username }: { username: string | null 
   const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
   const [interpretedAs, setInterpretedAs] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [filters, setFilters] = useState<Filters>({ sort: "", craft: "", availability: "", weight: "" });
+
   const dragCounterRef = useRef(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestBoxRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typedQueryRef = useRef("");
+  // Keep a stable ref to latest imageData for use inside handleSearch
+  const imageDataRef = useRef(imageData);
+  imageDataRef.current = imageData;
 
   const fetchSuggestions = useCallback(async (q: string) => {
     if (q.length < 2) { setSuggestions([]); return; }
@@ -174,8 +215,12 @@ export default function SearchInterface({ username }: { username: string | null 
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  async function handleSearch(q: string, imgData?: { base64: string; mimeType: string } | null) {
-    const searchImage = imgData ?? imageData;
+  async function handleSearch(
+    q: string,
+    imgData?: { base64: string; mimeType: string } | null,
+    activeFilters: Filters = filters
+  ) {
+    const searchImage = imgData !== undefined ? imgData : imageDataRef.current;
     if (!q.trim() && !searchImage) return;
     setShowSuggestions(false);
     setSuggestions([]);
@@ -186,8 +231,8 @@ export default function SearchInterface({ username }: { username: string | null 
 
     try {
       const body = searchImage
-        ? { image: searchImage.base64, mimeType: searchImage.mimeType }
-        : { query: q };
+        ? { image: searchImage.base64, mimeType: searchImage.mimeType, filters: activeFilters }
+        : { query: q, filters: activeFilters };
 
       const res = await fetch("/api/search", {
         method: "POST",
@@ -224,6 +269,19 @@ export default function SearchInterface({ username }: { username: string | null 
     handleSearch(name);
   }
 
+  function handleFilterChange(key: keyof Filters, value: string) {
+    // Toggle off if clicking the same value (except sort dropdowns)
+    const newVal = key !== "sort" && filters[key] === value ? "" : value;
+    const newFilters = { ...filters, [key]: newVal };
+    setFilters(newFilters);
+    // Auto-search if a search has already been run
+    if (results !== null || loading) {
+      handleSearch(query, undefined, newFilters);
+    }
+  }
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
   return (
     <div
       className="min-h-screen bg-gray-50 relative"
@@ -243,6 +301,7 @@ export default function SearchInterface({ username }: { username: string | null 
           </div>
         </div>
       )}
+
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">CraftersKit</h1>
@@ -263,7 +322,7 @@ export default function SearchInterface({ username }: { username: string | null 
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Search box */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">
             Find your next pattern
           </h2>
@@ -351,7 +410,73 @@ export default function SearchInterface({ username }: { username: string | null 
               {loading ? "Searching..." : "Search"}
             </button>
           </form>
+        </div>
 
+        {/* Filter bar */}
+        <div className="flex flex-wrap gap-2 mb-6 items-center">
+          {/* Sort */}
+          <select
+            value={filters.sort}
+            onChange={(e) => handleFilterChange("sort", e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {/* Craft toggles */}
+          <div className="flex rounded-lg overflow-hidden border border-gray-300 text-sm">
+            <button
+              type="button"
+              onClick={() => handleFilterChange("craft", "knitting")}
+              className={`px-3 py-2 transition-colors ${filters.craft === "knitting" ? "bg-[#9b2335] text-white border-[#9b2335]" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            >
+              Knitting
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFilterChange("craft", "crochet")}
+              className={`px-3 py-2 border-l border-gray-300 transition-colors ${filters.craft === "crochet" ? "bg-[#9b2335] text-white border-l-[#9b2335]" : "bg-white text-gray-700 hover:bg-gray-50"}`}
+            >
+              Crochet
+            </button>
+          </div>
+
+          {/* Free toggle */}
+          <button
+            type="button"
+            onClick={() => handleFilterChange("availability", "free")}
+            className={`text-sm px-3 py-2 rounded-lg border transition-colors ${filters.availability === "free" ? "bg-[#9b2335] text-white border-[#9b2335]" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"}`}
+          >
+            Free only
+          </button>
+
+          {/* Weight */}
+          <select
+            value={filters.weight}
+            onChange={(e) => handleFilterChange("weight", e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent"
+          >
+            {WEIGHT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {/* Clear filters */}
+          {activeFilterCount > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const cleared = { sort: "", craft: "", availability: "", weight: "" };
+                setFilters(cleared);
+                if (results !== null) handleSearch(query, undefined, cleared);
+              }}
+              className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         {/* Interpreted as */}
@@ -398,4 +523,3 @@ export default function SearchInterface({ username }: { username: string | null 
     </div>
   );
 }
-
