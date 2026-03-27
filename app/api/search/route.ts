@@ -42,7 +42,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Query required" }, { status: 400 });
   }
 
-  const searchParams = await buildSearchParams(query);
+  let searchParams: Record<string, string>;
+  try {
+    searchParams = await buildSearchParams(query);
+  } catch (e) {
+    console.error("Anthropic error:", e);
+    return NextResponse.json({ error: "Anthropic failed", detail: String(e) }, { status: 502 });
+  }
 
   const params = new URLSearchParams({
     ...searchParams,
@@ -59,7 +65,9 @@ export async function POST(req: NextRequest) {
   );
 
   if (!ravelryRes.ok) {
-    return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
+    const body = await ravelryRes.text();
+    console.error("Ravelry error:", ravelryRes.status, body);
+    return NextResponse.json({ error: "Ravelry API error", status: ravelryRes.status, detail: body }, { status: 502 });
   }
 
   const data = await ravelryRes.json();
