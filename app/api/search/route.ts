@@ -96,13 +96,15 @@ export async function POST(req: NextRequest) {
     }
 
     const session = await auth();
-    const token = (session as any)?.accessToken as string | undefined;
-    if (!token) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const userToken = (session as any)?.accessToken as string | undefined;
+    const authHeader = userToken
+      ? `Bearer ${userToken}`
+      : `Basic ${Buffer.from(`${process.env.RAVELRY_CLIENT_ID}:${process.env.RAVELRY_CLIENT_SECRET}`).toString("base64")}`;
 
     async function ravelrySearch(p: Record<string, string>) {
       return fetch(
         `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: authHeader } }
       );
     }
 
