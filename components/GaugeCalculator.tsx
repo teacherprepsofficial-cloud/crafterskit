@@ -364,47 +364,26 @@ function CalcMode() {
   }
 
   return (
-    <div className="flex gap-8 items-start">
-      {/* LEFT: inputs */}
-      <div className="flex-1 min-w-0 space-y-6">
-        <Divider emoji="🧵" />
+    <div className="space-y-6">
+      {/* Flex: gauge inputs (left) + BUY panel (right) */}
+      <div className="flex gap-8 items-start">
+        <div className="flex-1 min-w-0 space-y-6">
+          <Divider emoji="🧵" />
 
-        <div className="grid grid-cols-2 gap-5">
-          <GaugeInput
-            label="Pattern gauge" sublabel="From your pattern label or first page"
-            value={patSts} onChange={setPatSts} unit={patUnit} onUnit={setPatUnit}
-            tip="Every pattern lists a gauge — usually near the top. Look for something like '20 stitches = 4 inches on US 8 needles'. Enter that first number here."
-          />
-          <GaugeInput
-            label="Your gauge" sublabel="From your yarn label — or your own swatch"
-            value={yourSts} onChange={setYourSts} unit={yourUnit} onUnit={setYourUnit} accent
-            tip="Your yarn's label shows a gauge range like '18–22 sts per 4 inches'. Use the middle number. Or knit a small test square and count your own stitches over 4 inches."
-          />
-        </div>
+          <div className="grid grid-cols-2 gap-5">
+            <GaugeInput
+              label="Pattern gauge" sublabel="From your pattern label or first page"
+              value={patSts} onChange={setPatSts} unit={patUnit} onUnit={setPatUnit}
+              tip="Every pattern lists a gauge — usually near the top. Look for something like '20 stitches = 4 inches on US 8 needles'. Enter that first number here."
+            />
+            <GaugeInput
+              label="Your gauge" sublabel="From your yarn label — or your own swatch"
+              value={yourSts} onChange={setYourSts} unit={yourUnit} onUnit={setYourUnit} accent
+              tip="Your yarn's label shows a gauge range like '18–22 sts per 4 inches'. Use the middle number. Or knit a small test square and count your own stitches over 4 inches."
+            />
+          </div>
 
-        {/* Gauge result — inline, right below gauge inputs */}
-        {hasScale && (
-          perfect ? (
-            <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3">
-              <span className="text-2xl">🎉</span>
-              <div>
-                <span className="text-lg font-bold text-emerald-700">Perfect match!</span>
-                <span className="text-base text-gray-400 ml-2">No adjustments needed.</span>
-              </div>
-            </div>
-          ) : (
-            <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
-              <span className={`text-5xl font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
-                {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
-              </span>
-              <span className="text-2xl text-gray-500">
-                {tighter ? "— you'll need more yarn than the pattern." : "— you'll need less yarn than the pattern."}
-              </span>
-            </div>
-          )
-        )}
-
-        <Divider emoji="🧶" />
+          <Divider emoji="🧶" />
 
         {/* Yardage */}
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
@@ -474,162 +453,184 @@ function CalcMode() {
             </div>
           )}
         </div>
-
-        {/* Row gauge */}
-        <div className="border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-all duration-200">
-          <button onClick={() => setShowRows(!showRows)}
-            className="w-full px-7 py-5 flex items-center justify-between text-left hover:bg-white transition-all duration-200">
-            <div>
-              <span className="text-lg font-bold text-gray-700">Add row gauge for more accurate yardage</span>
-              <span className="text-base text-gray-400 ml-3">(optional — most people skip this)</span>
-            </div>
-            <span className="text-2xl text-gray-400">{showRows ? "↑" : "↓"}</span>
-          </button>
-          {showRows && (
-            <div className="px-7 pb-7 bg-white border-t-2 border-dashed border-gray-200">
-              <p className="text-base text-gray-400 mt-5 mb-5">Row gauge affects how much yarn you need but most yarn labels don&apos;t show it. Only fill this in if you&apos;ve actually measured rows on a swatch.</p>
-              <div className="grid grid-cols-2 gap-5">
-                {[
-                  { label: "Pattern rows", val: patRows, set: setPatRows, unit: patRowUnit, setUnit: setPatRowUnit },
-                  { label: "Your rows", val: yourRows, set: setYourRows, unit: yourRowUnit, setUnit: setYourRowUnit },
-                ].map(({ label, val, set, unit, setUnit }) => (
-                  <div key={label}>
-                    <label className="text-lg font-bold text-gray-700 block mb-3">{label}</label>
-                    <div className="flex gap-2 mb-3">
-                      {(["4inch", "inch"] as const).map((u) => (
-                        <button key={u} onClick={() => setUnit(u)}
-                          className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#9b2335]/40"}`}>
-                          {u === "4inch" ? "per 4 in" : "per inch"}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val}
-                        onChange={(e) => set(e.target.value)} onKeyDown={blockLetters}
-                        className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
-                      <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
-        <Divider emoji="📐" />
-
-        {/* Stitch converter */}
-        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
-            Convert a single stitch count
-            <InfoTip text="For example: your pattern says 'Cast on 120 stitches'. Type 120 here and we'll tell you how many to cast on with your yarn." />
-          </h2>
-          <p className="text-lg text-gray-400 mb-6">Pattern says to cast on X stitches — how many do YOU use?</p>
-          <div className="flex items-center gap-5 flex-wrap">
-            <div>
-              <label className="text-base text-gray-500 mb-2 block">Pattern says</label>
-              <div className="flex items-center gap-3">
-                <input type="number" min="0" placeholder="e.g. 120" value={customSts}
-                  onChange={(e) => setCustomSts(e.target.value)} onKeyDown={blockLetters}
-                  className="w-40 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
-                <span className="text-xl text-gray-400">sts</span>
-              </div>
-            </div>
-            {newCust !== null ? (
-              <>
-                <div className="text-5xl text-gray-200 self-end pb-4">→</div>
-                <div>
-                  <div className="text-base text-gray-400 mb-2">You use</div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-6xl font-bold text-[#9b2335]">{newCust}</span>
-                    <span className="text-2xl text-gray-400">stitches</span>
-                  </div>
-                  {newCust !== Math.round(custNum) && <div className="text-base text-gray-400 mt-1">was {customSts} in the pattern</div>}
+        {/* BUY panel — right side of flex, sticky */}
+        {skeinsNeeded !== null && (
+          <div className="w-72 shrink-0 sticky top-6 self-start">
+            <div className="bg-emerald-500 text-white rounded-3xl p-8 text-center hover:scale-[1.02] cursor-pointer transition-all duration-300">
+              <p className="text-base font-semibold opacity-70 uppercase tracking-widest mb-1">Buy</p>
+              <div className="text-9xl font-bold leading-none">{skeinsNeeded}</div>
+              <div className="text-3xl font-semibold mt-2 opacity-90">{skeinsNeeded === 1 ? "skein" : "skeins"}</div>
+              {newYards && (
+                <div className="mt-4 text-sm opacity-70">
+                  {yardUnit === "m"
+                    ? `${Math.round(newYards / 1.09361).toLocaleString()} meters total`
+                    : `${Math.round(newYards).toLocaleString()} yards total`}
                 </div>
-              </>
-            ) : (
-              <p className="text-lg text-gray-400 self-end pb-4">
-                {!hasScale ? "Enter both gauges at the top first" : "Enter a stitch count to convert"}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <Divider emoji="✂️" />
-
-        {/* Pattern rewrite */}
-        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
-            Rewrite my entire pattern
-            <InfoTip text="Paste the written instructions from your pattern. We'll rewrite every single stitch count and row count to match your gauge. Measurements in inches won't change." />
-          </h2>
-          <p className="text-lg text-gray-400 mb-5">Paste your instructions below and we&apos;ll adjust every stitch count, row count, and cast-on — automatically.</p>
-          {!hasScale && (
-            <div className="mb-5 border-2 border-dashed border-amber-200 bg-amber-50 rounded-2xl px-5 py-3 text-base text-amber-700">
-              ⚠️ Enter both gauges at the top of the page before rewriting.
-            </div>
-          )}
-          <textarea value={patternText} onChange={(e) => setPatternText(e.target.value)} rows={10}
-            placeholder={"Paste your pattern instructions here..."}
-            className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
-          />
-          <div className="mt-5 flex gap-3">
-            <button onClick={handleRewrite} disabled={!hasScale || !patternText.trim() || rewriting}
-              className="px-8 py-4 bg-[#9b2335] text-white text-xl font-bold rounded-2xl hover:bg-[#7d1c2a] hover:scale-105 transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-md">
-              {rewriting ? "Rewriting your pattern…" : "Rewrite My Pattern"}
-            </button>
-            {patternText && !rewriting && (
-              <button onClick={() => { setPatternText(""); setOutput(""); }}
-                className="px-5 py-4 text-lg text-gray-400 hover:text-[#9b2335] transition-colors">Clear</button>
-            )}
-          </div>
-          {rewriteErr && <p className="mt-3 text-lg text-red-500">{rewriteErr}</p>}
-        </div>
-
-        {(output || rewriting) && (
-          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
-            <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-900">Your Rewritten Pattern</h2>
-                {rewriting && <span className="flex items-center gap-2 text-base text-[#9b2335] font-semibold"><span className="w-2 h-2 bg-[#9b2335] rounded-full animate-pulse" />Writing…</span>}
-              </div>
-              {output && !rewriting && (
-                <button onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                  className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105">
-                  {copied ? "Copied! ✓" : "Copy to clipboard"}
-                </button>
               )}
-            </div>
-            <div className="p-8">
-              <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
-                {output}
-                {rewriting && <span className="inline-block w-0.5 h-5 bg-[#9b2335] animate-pulse ml-1 align-middle" />}
-              </pre>
             </div>
           </div>
         )}
-
-        <div className="h-8" />
       </div>
 
-      {/* RIGHT: sticky results */}
-      {/* ── RIGHT: STICKY BUY PANEL — only shown when answer is ready ── */}
-      {skeinsNeeded !== null && (
-        <div className="w-72 shrink-0 sticky top-6 self-start">
-          <div className="bg-emerald-500 text-white rounded-3xl p-8 text-center hover:scale-[1.02] cursor-pointer transition-all duration-300">
-            <p className="text-base font-semibold opacity-70 uppercase tracking-widest mb-1">Buy</p>
-            <div className="text-9xl font-bold leading-none">{skeinsNeeded}</div>
-            <div className="text-3xl font-semibold mt-2 opacity-90">{skeinsNeeded === 1 ? "skein" : "skeins"}</div>
-            {newYards && (
-              <div className="mt-4 text-sm opacity-70">
-                {yardUnit === "m"
-                  ? `${Math.round(newYards / 1.09361).toLocaleString()} meters total`
-                  : `${Math.round(newYards).toLocaleString()} yards total`}
+      {/* Gauge result — full width below gauge + yardage */}
+      {hasScale && (
+        perfect ? (
+          <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <span className="text-lg font-bold text-emerald-700">Perfect match!</span>
+              <span className="text-base text-gray-400 ml-2">No adjustments needed.</span>
+            </div>
+          </div>
+        ) : (
+          <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
+            <span className={`text-5xl font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
+              {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
+            </span>
+            <span className="text-2xl text-gray-500">
+              {tighter ? "— you'll need more yarn than the pattern." : "— you'll need less yarn than the pattern."}
+            </span>
+          </div>
+        )
+      )}
+
+      {/* Row gauge — full width */}
+      <div className="border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-all duration-200">
+        <button onClick={() => setShowRows(!showRows)}
+          className="w-full px-7 py-5 flex items-center justify-between text-left hover:bg-white transition-all duration-200">
+          <div>
+            <span className="text-lg font-bold text-gray-700">Add row gauge for more accurate yardage</span>
+            <span className="text-base text-gray-400 ml-3">(optional — most people skip this)</span>
+          </div>
+          <span className="text-2xl text-gray-400">{showRows ? "↑" : "↓"}</span>
+        </button>
+        {showRows && (
+          <div className="px-7 pb-7 bg-white border-t-2 border-dashed border-gray-200">
+            <p className="text-base text-gray-400 mt-5 mb-5">Row gauge affects how much yarn you need but most yarn labels don&apos;t show it. Only fill this in if you&apos;ve actually measured rows on a swatch.</p>
+            <div className="grid grid-cols-2 gap-5">
+              {[
+                { label: "Pattern rows", val: patRows, set: setPatRows, unit: patRowUnit, setUnit: setPatRowUnit },
+                { label: "Your rows", val: yourRows, set: setYourRows, unit: yourRowUnit, setUnit: setYourRowUnit },
+              ].map(({ label, val, set, unit, setUnit }) => (
+                <div key={label}>
+                  <label className="text-lg font-bold text-gray-700 block mb-3">{label}</label>
+                  <div className="flex gap-2 mb-3">
+                    {(["4inch", "inch"] as const).map((u) => (
+                      <button key={u} onClick={() => setUnit(u)}
+                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#9b2335]/40"}`}>
+                        {u === "4inch" ? "per 4 in" : "per inch"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val}
+                      onChange={(e) => set(e.target.value)} onKeyDown={blockLetters}
+                      className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+                    <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Divider emoji="📐" />
+
+      {/* Stitch converter — full width */}
+      <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
+          Convert a single stitch count
+          <InfoTip text="For example: your pattern says 'Cast on 120 stitches'. Type 120 here and we'll tell you how many to cast on with your yarn." />
+        </h2>
+        <p className="text-lg text-gray-400 mb-6">Pattern says to cast on X stitches — how many do YOU use?</p>
+        <div className="flex items-center gap-5 flex-wrap">
+          <div>
+            <label className="text-base text-gray-500 mb-2 block">Pattern says</label>
+            <div className="flex items-center gap-3">
+              <input type="number" min="0" placeholder="e.g. 120" value={customSts}
+                onChange={(e) => setCustomSts(e.target.value)} onKeyDown={blockLetters}
+                className="w-40 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+              <span className="text-xl text-gray-400">sts</span>
+            </div>
+          </div>
+          {newCust !== null ? (
+            <>
+              <div className="text-5xl text-gray-200 self-end pb-4">→</div>
+              <div>
+                <div className="text-base text-gray-400 mb-2">You use</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-6xl font-bold text-[#9b2335]">{newCust}</span>
+                  <span className="text-2xl text-gray-400">stitches</span>
+                </div>
+                {newCust !== Math.round(custNum) && <div className="text-base text-gray-400 mt-1">was {customSts} in the pattern</div>}
               </div>
+            </>
+          ) : (
+            <p className="text-lg text-gray-400 self-end pb-4">
+              {!hasScale ? "Enter both gauges at the top first" : "Enter a stitch count to convert"}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Divider emoji="✂️" />
+
+      {/* Pattern rewrite — full width */}
+      <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
+          Rewrite my entire pattern
+          <InfoTip text="Paste the written instructions from your pattern. We'll rewrite every single stitch count and row count to match your gauge. Measurements in inches won't change." />
+        </h2>
+        <p className="text-lg text-gray-400 mb-5">Paste your instructions below and we&apos;ll adjust every stitch count, row count, and cast-on — automatically.</p>
+        {!hasScale && (
+          <div className="mb-5 border-2 border-dashed border-amber-200 bg-amber-50 rounded-2xl px-5 py-3 text-base text-amber-700">
+            ⚠️ Enter both gauges at the top of the page before rewriting.
+          </div>
+        )}
+        <textarea value={patternText} onChange={(e) => setPatternText(e.target.value)} rows={10}
+          placeholder={"Paste your pattern instructions here..."}
+          className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
+        />
+        <div className="mt-5 flex gap-3">
+          <button onClick={handleRewrite} disabled={!hasScale || !patternText.trim() || rewriting}
+            className="px-8 py-4 bg-[#9b2335] text-white text-xl font-bold rounded-2xl hover:bg-[#7d1c2a] hover:scale-105 transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-md">
+            {rewriting ? "Rewriting your pattern…" : "Rewrite My Pattern"}
+          </button>
+          {patternText && !rewriting && (
+            <button onClick={() => { setPatternText(""); setOutput(""); }}
+              className="px-5 py-4 text-lg text-gray-400 hover:text-[#9b2335] transition-colors">Clear</button>
+          )}
+        </div>
+        {rewriteErr && <p className="mt-3 text-lg text-red-500">{rewriteErr}</p>}
+      </div>
+
+      {(output || rewriting) && (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
+          <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-gray-900">Your Rewritten Pattern</h2>
+              {rewriting && <span className="flex items-center gap-2 text-base text-[#9b2335] font-semibold"><span className="w-2 h-2 bg-[#9b2335] rounded-full animate-pulse" />Writing…</span>}
+            </div>
+            {output && !rewriting && (
+              <button onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105">
+                {copied ? "Copied! ✓" : "Copy to clipboard"}
+              </button>
             )}
+          </div>
+          <div className="p-8">
+            <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
+              {output}
+              {rewriting && <span className="inline-block w-0.5 h-5 bg-[#9b2335] animate-pulse ml-1 align-middle" />}
+            </pre>
           </div>
         </div>
       )}
+
+      <div className="h-8" />
     </div>
   );
 }
