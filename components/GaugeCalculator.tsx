@@ -72,6 +72,7 @@ function GaugeInput({
         <input
           type="number" min="0" step="0.5" placeholder="e.g. 20" value={value}
           onChange={(e) => onChange(e.target.value)}
+          onWheel={(e) => e.currentTarget.blur()}
           onKeyDown={blockLetters}
           className={`w-40 text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#9b2335]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
         />
@@ -430,7 +431,7 @@ function CalcMode() {
               </label>
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 600" : "e.g. 660"} value={origYards}
-                  onChange={(e) => setOrigYards(e.target.value)} onKeyDown={blockLetters}
+                  onChange={(e) => setOrigYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
                   className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
@@ -442,7 +443,7 @@ function CalcMode() {
               </label>
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 200" : "e.g. 220"} value={skeinsYards}
-                  onChange={(e) => setSkeinsYards(e.target.value)} onKeyDown={blockLetters}
+                  onChange={(e) => setSkeinsYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
                   className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
@@ -527,7 +528,7 @@ function CalcMode() {
                   </div>
                   <div className="flex items-center gap-3">
                     <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val}
-                      onChange={(e) => set(e.target.value)} onKeyDown={blockLetters}
+                      onChange={(e) => set(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
                       className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
                     <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
                   </div>
@@ -552,7 +553,7 @@ function CalcMode() {
             <label className="text-base text-gray-500 mb-2 block">Pattern says</label>
             <div className="flex items-center gap-3">
               <input type="number" min="0" placeholder="e.g. 120" value={customSts}
-                onChange={(e) => setCustomSts(e.target.value)} onKeyDown={blockLetters}
+                onChange={(e) => setCustomSts(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
                 className="w-40 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
               <span className="text-xl text-gray-400">sts</span>
             </div>
