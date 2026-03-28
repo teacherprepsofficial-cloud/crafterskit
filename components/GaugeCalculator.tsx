@@ -303,11 +303,6 @@ function CalcMode() {
   const [skeinsYards, setSkeinsYards] = useState("");
   const [yardUnit, setYardUnit] = useState<"yds" | "m">("yds");
   const [customSts, setCustomSts] = useState("");
-  const [patternText, setPatternText] = useState("");
-  const [output, setOutput] = useState("");
-  const [rewriting, setRewriting] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [rewriteErr, setRewriteErr] = useState("");
 
   const pStsPerIn = patSts && +patSts > 0 ? perInch(+patSts, patUnit) : null;
   const yStsPerIn = yourSts && +yourSts > 0 ? perInch(+yourSts, yourUnit) : null;
@@ -334,35 +329,6 @@ function CalcMode() {
     ? Math.round(custNum * stitchScale) : null;
   const pctChange = stitchScale ? ((stitchScale - 1) * 100) : 0;
   const tighter = stitchScale !== null && stitchScale > 1;
-
-  async function handleRewrite() {
-    if (!hasScale || !patternText.trim()) return;
-    setRewriting(true); setOutput(""); setRewriteErr("");
-    try {
-      const res = await fetch("/api/gauge-convert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patternText,
-          patternStitchesPerInch: pStsPerIn,
-          patternRowsPerInch: pRowsPerIn ?? pStsPerIn,
-          yourStitchesPerInch: yStsPerIn,
-          yourRowsPerInch: yRowsPerIn ?? yStsPerIn,
-          stitchScale,
-          rowScale,
-        }),
-      });
-      if (!res.ok || !res.body) { setRewriteErr("Something went wrong. Try again."); return; }
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        setOutput((p) => p + decoder.decode(value, { stream: true }));
-      }
-    } catch { setRewriteErr("Something went wrong. Try again."); }
-    finally { setRewriting(false); }
-  }
 
   return (
     <div className="space-y-6">
@@ -577,60 +543,6 @@ function CalcMode() {
           )}
         </div>
       </div>
-
-      <Divider emoji="✂️" />
-
-      {/* Pattern rewrite — full width */}
-      <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
-          Rewrite my entire pattern
-          <InfoTip text="Paste the written instructions from your pattern. We'll rewrite every single stitch count and row count to match your gauge. Measurements in inches won't change." />
-        </h2>
-        <p className="text-lg text-gray-400 mb-5">Paste your instructions below and we&apos;ll adjust every stitch count, row count, and cast-on — automatically.</p>
-        {!hasScale && (
-          <div className="mb-5 border-2 border-dashed border-amber-200 bg-amber-50 rounded-2xl px-5 py-3 text-base text-amber-700">
-            ⚠️ Enter both gauges at the top of the page before rewriting.
-          </div>
-        )}
-        <textarea value={patternText} onChange={(e) => setPatternText(e.target.value)} rows={10}
-          placeholder={"Paste your pattern instructions here..."}
-          className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
-        />
-        <div className="mt-5 flex gap-3">
-          <button onClick={handleRewrite} disabled={!hasScale || !patternText.trim() || rewriting}
-            className="px-8 py-4 bg-[#9b2335] text-white text-xl font-bold rounded-2xl hover:bg-[#7d1c2a] hover:scale-105 transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-md">
-            {rewriting ? "Rewriting your pattern…" : "Rewrite My Pattern"}
-          </button>
-          {patternText && !rewriting && (
-            <button onClick={() => { setPatternText(""); setOutput(""); }}
-              className="px-5 py-4 text-lg text-gray-400 hover:text-[#9b2335] transition-colors">Clear</button>
-          )}
-        </div>
-        {rewriteErr && <p className="mt-3 text-lg text-red-500">{rewriteErr}</p>}
-      </div>
-
-      {(output || rewriting) && (
-        <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-gray-900">Your Rewritten Pattern</h2>
-              {rewriting && <span className="flex items-center gap-2 text-base text-[#9b2335] font-semibold"><span className="w-2 h-2 bg-[#9b2335] rounded-full animate-pulse" />Writing…</span>}
-            </div>
-            {output && !rewriting && (
-              <button onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105">
-                {copied ? "Copied! ✓" : "Copy to clipboard"}
-              </button>
-            )}
-          </div>
-          <div className="p-8">
-            <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
-              {output}
-              {rewriting && <span className="inline-block w-0.5 h-5 bg-[#9b2335] animate-pulse ml-1 align-middle" />}
-            </pre>
-          </div>
-        </div>
-      )}
 
       <div className="h-8" />
     </div>
