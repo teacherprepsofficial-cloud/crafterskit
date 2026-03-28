@@ -125,6 +125,11 @@ export default function PhotoToPatternPage() {
         if (isTableRow(line)) {
           const tableLines: string[] = [];
           while (i < arr.length && isTableRow(arr[i])) { tableLines.push(arr[i]); i++; }
+          const hasSep = tableLines.some(l => isSeparator(l));
+          if (!hasSep) {
+            out.push(`<pre style="font-family:monospace;font-size:8.5pt;background:#f9f9f9;border:1px solid #e5e5e5;border-radius:4px;padding:8px;margin:6px 0;overflow-x:auto;white-space:pre;">${tableLines.join("\n")}</pre>`);
+            continue;
+          }
           const dataRows = tableLines.filter(l => !isSeparator(l));
           let tbl = '<table class="md-table">';
           dataRows.forEach((row, ri) => {
@@ -265,10 +270,16 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
         out.push(<h4 key={`h3-${i}`} className="text-sm font-bold text-gray-800 mt-4 mb-1 border-b border-gray-200 pb-1">{line.slice(4)}</h4>);
         i++; continue;
       }
-      // Markdown table
+      // Markdown table (only if a separator row |---|---| exists in the group)
       if (line.trim().startsWith("|") && line.includes("|", 1)) {
         const tblLines: string[] = [];
         while (i < lines.length && lines[i].trim().startsWith("|")) { tblLines.push(lines[i]); i++; }
+        const hasSeparator = tblLines.some(l => /^\|[\s|:-]+\|$/.test(l.trim()));
+        if (!hasSeparator) {
+          // ASCII diagram — render as preformatted text
+          out.push(<pre key={`pre-${i}`} className="text-xs text-gray-600 font-mono bg-gray-50 border border-gray-200 rounded p-3 my-2 overflow-x-auto whitespace-pre">{tblLines.join("\n")}</pre>);
+          continue;
+        }
         const rows = tblLines.filter(l => !/^\|[\s|:-]+\|$/.test(l.trim()));
         out.push(
           <div key={`tbl-${i}`} className="overflow-x-auto my-3 rounded-lg border border-rose-200">
