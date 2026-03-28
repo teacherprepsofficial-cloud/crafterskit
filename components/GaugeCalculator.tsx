@@ -32,7 +32,7 @@ function InfoTip({ text, flipLeft }: { text: string; flipLeft?: boolean }) {
       <button
         onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}
         onFocus={() => setShow(true)} onBlur={() => setShow(false)}
-        className="w-7 h-7 rounded-full border-2 border-dashed border-[#9b2335]/50 text-[#9b2335] text-sm font-bold flex items-center justify-center cursor-help hover:bg-[#9b2335] hover:text-white hover:border-solid transition-all duration-200"
+        className="w-7 h-7 rounded-full border-2 border-dashed border-[#e11d48]/50 text-[#e11d48] text-sm font-bold flex items-center justify-center cursor-help hover:bg-[#e11d48] hover:text-white hover:border-solid transition-all duration-200"
       >i</button>
       {show && (
         <div className={`absolute ${flipLeft ? "right-9" : "left-9"} top-1/2 -translate-y-1/2 z-50 bg-gray-900 text-white text-base rounded-2xl px-4 py-3 w-80 shadow-2xl leading-relaxed pointer-events-none`}>
@@ -51,19 +51,19 @@ function GaugeInput({
   accent?: boolean; tip: string;
 }) {
   const border = accent
-    ? "border-[#9b2335]/40 hover:border-[#9b2335] focus:border-[#9b2335]"
+    ? "border-[#e11d48]/40 hover:border-[#e11d48] focus:border-[#e11d48]"
     : "border-gray-300 hover:border-gray-500 focus:border-gray-600";
   return (
-    <div className={`bg-white border-2 border-dashed ${accent ? "border-[#9b2335]/30 hover:border-[#9b2335]/60" : "border-gray-200 hover:border-gray-400"} rounded-3xl p-7 transition-all duration-200 hover:shadow-md`}>
+    <div className={`bg-white border-2 border-dashed ${accent ? "border-[#e11d48]/30 hover:border-[#e11d48]/60" : "border-gray-200 hover:border-gray-400"} rounded-3xl p-7 transition-all duration-200 hover:shadow-md`}>
       <div className="flex items-start justify-between mb-1">
-        <h2 className={`text-2xl font-bold ${accent ? "text-[#9b2335]" : "text-gray-800"}`}>{label}</h2>
+        <h2 className={`text-2xl font-bold ${accent ? "text-[#e11d48]" : "text-gray-800"}`}>{label}</h2>
         <InfoTip text={tip} flipLeft={accent} />
       </div>
       <p className="text-base text-gray-400 mb-5">{sublabel}</p>
       <div className="flex gap-2 mb-5">
         {(["4inch", "inch"] as const).map((u) => (
           <button key={u} onClick={() => onUnit(u)}
-            className={`px-4 py-2 rounded-xl text-base font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#9b2335]/40 hover:text-[#9b2335]"}`}>
+            className={`px-4 py-2 rounded-xl text-base font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#e11d48] border-[#e11d48] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#e11d48]/40 hover:text-[#e11d48]"}`}>
             {u === "4inch" ? "per 4 in / 10 cm" : "per inch"}
           </button>
         ))}
@@ -74,7 +74,7 @@ function GaugeInput({
           onChange={(e) => onChange(e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
           onKeyDown={blockLetters}
-          className={`w-40 text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#9b2335]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
+          className={`w-40 text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#e11d48]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
         />
         <span className="text-xl text-gray-400 font-medium leading-tight">
           stitches<br />
@@ -88,9 +88,9 @@ function GaugeInput({
 function Divider({ emoji }: { emoji: string }) {
   return (
     <div className="flex items-center gap-4 py-2">
-      <div className="flex-1 border-t-2 border-dashed border-[#9b2335]/20" />
+      <div className="flex-1 border-t-2 border-dashed border-[#e11d48]/20" />
       <span className="text-2xl">{emoji}</span>
-      <div className="flex-1 border-t-2 border-dashed border-[#9b2335]/20" />
+      <div className="flex-1 border-t-2 border-dashed border-[#e11d48]/20" />
     </div>
   );
 }
@@ -116,8 +116,8 @@ function PdfDropZone({ pdfName, onFile }: {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`flex flex-col items-center justify-center w-full h-48 border-2 rounded-2xl cursor-pointer transition-all duration-200 ${
-        dragging ? "border-solid border-[#9b2335] bg-[#9b2335]/10 scale-[1.01]"
-          : pdfName ? "border-dashed border-[#9b2335]/40 bg-[#9b2335]/5 hover:bg-[#9b2335]/10"
+        dragging ? "border-solid border-[#e11d48] bg-[#e11d48]/10 scale-[1.01]"
+          : pdfName ? "border-dashed border-[#e11d48]/40 bg-[#e11d48]/5 hover:bg-[#e11d48]/10"
           : "border-dashed border-gray-300 bg-gray-50 hover:bg-white hover:border-gray-400"
       }`}
     >
@@ -125,7 +125,7 @@ function PdfDropZone({ pdfName, onFile }: {
       {pdfName ? (
         <div className="text-center pointer-events-none">
           <div className="text-4xl mb-2">📄</div>
-          <p className="text-lg font-bold text-[#9b2335]">{pdfName}</p>
+          <p className="text-lg font-bold text-[#e11d48]">{pdfName}</p>
           <p className="text-base text-gray-400 mt-1">Click or drop to replace</p>
         </div>
       ) : (
@@ -184,21 +184,21 @@ function buildPdfHtml(content: string): string {
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Inter',Georgia,sans-serif;font-size:11pt;color:#222;background:#fff;line-height:1.65}
-  .header{background:#9b2335;color:#fff;padding:13px 48px;display:flex;justify-content:space-between;align-items:center}
+  .header{background:#e11d48;color:#fff;padding:13px 48px;display:flex;justify-content:space-between;align-items:center}
   .header .brand{font-weight:700;font-size:15pt;letter-spacing:-0.3px}
   .header .sub{font-size:10pt;opacity:.88}
   .wrap{max-width:680px;margin:0 auto;padding:36px 48px 60px}
-  h1{font-family:'Playfair Display',Georgia,serif;font-size:22pt;color:#9b2335;font-weight:700;margin:28px 0 6px;line-height:1.25}
+  h1{font-family:'Playfair Display',Georgia,serif;font-size:22pt;color:#e11d48;font-weight:700;margin:28px 0 6px;line-height:1.25}
   h2{font-family:'Inter',sans-serif;font-size:13pt;color:#111;font-weight:600;margin:26px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #ebebeb}
   h3{font-family:'Inter',sans-serif;font-size:11.5pt;color:#333;font-weight:600;margin:18px 0 5px}
   p{margin:6px 0 10px}
   .gap{height:8px}
   table{width:100%;border-collapse:collapse;margin:14px 0;font-size:10.5pt}
-  th{background:#9b2335;color:#fff;padding:8px 14px;text-align:left;font-weight:600;font-size:10pt}
+  th{background:#e11d48;color:#fff;padding:8px 14px;text-align:left;font-weight:600;font-size:10pt}
   td{padding:7px 14px;border-bottom:1px solid #eee}
   tr:nth-child(even) td{background:#faf7f5}
-  td:first-child{color:#9b2335;font-weight:500}
-  blockquote{background:#faf7f5;border-left:3px solid #9b2335;padding:9px 16px;margin:10px 0;color:#555;font-style:italic;font-size:10.5pt}
+  td:first-child{color:#e11d48;font-weight:500}
+  blockquote{background:#faf7f5;border-left:3px solid #e11d48;padding:9px 16px;margin:10px 0;color:#555;font-style:italic;font-size:10.5pt}
   li{margin:3px 0 3px 22px;list-style:disc}
   hr{border:none;border-top:1px solid #e5e5e5;margin:18px 0}
   strong{color:#111;font-weight:600}
@@ -304,11 +304,11 @@ function AiMode() {
         {/* Paste / Upload toggle */}
         <div className="flex gap-2 mb-5">
           <button onClick={() => setInputMode("paste")}
-            className={`px-5 py-2.5 rounded-xl text-base font-bold border-2 transition-all duration-200 ${inputMode === "paste" ? "bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600"}`}>
+            className={`px-5 py-2.5 rounded-xl text-base font-bold border-2 transition-all duration-200 ${inputMode === "paste" ? "bg-[#e11d48] border-[#e11d48] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600"}`}>
             Paste text
           </button>
           <button onClick={() => setInputMode("pdf")}
-            className={`px-5 py-2.5 rounded-xl text-base font-bold border-2 transition-all duration-200 ${inputMode === "pdf" ? "bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600"}`}>
+            className={`px-5 py-2.5 rounded-xl text-base font-bold border-2 transition-all duration-200 ${inputMode === "pdf" ? "bg-[#e11d48] border-[#e11d48] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600"}`}>
             Upload PDF
           </button>
         </div>
@@ -319,12 +319,12 @@ function AiMode() {
             onChange={(e) => setPatternText(e.target.value)}
             rows={10}
             placeholder={"Paste the instructions here — for example:\n\nCast on 140 sts. Join in the round.\nKnit one round placing markers every 28 sts.\nWork chart repeats as desired.\nBind off all sts."}
-            className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
+            className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
           />
         ) : pdfLoading ? (
-          <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-[#9b2335]/30 rounded-2xl bg-[#9b2335]/5">
+          <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-[#e11d48]/30 rounded-2xl bg-[#e11d48]/5">
             <div className="text-4xl mb-2 animate-pulse">📖</div>
-            <p className="text-lg font-bold text-[#9b2335]">Reading your pattern…</p>
+            <p className="text-lg font-bold text-[#e11d48]">Reading your pattern…</p>
             <p className="text-base text-gray-400 mt-1">Just a moment!</p>
           </div>
         ) : (
@@ -333,8 +333,8 @@ function AiMode() {
       </div>
 
       {/* Box 2 — Describe situation */}
-      <div className="bg-white border-2 border-dashed border-[#9b2335]/30 rounded-3xl p-8 hover:border-[#9b2335]/60 hover:shadow-md transition-all duration-200">
-        <h2 className="text-3xl font-bold text-[#9b2335] mb-2">Step 2 — Let us know how you&apos;re looking to change the pattern</h2>
+      <div className="bg-white border-2 border-dashed border-[#e11d48]/30 rounded-3xl p-8 hover:border-[#e11d48]/60 hover:shadow-md transition-all duration-200">
+        <h2 className="text-3xl font-bold text-[#e11d48] mb-2">Step 2 — Let us know how you&apos;re looking to change the pattern</h2>
         <p className="text-lg text-gray-400 mb-6">
           You can just type in normal language and our AI calculator will figure it out.
         </p>
@@ -343,7 +343,7 @@ function AiMode() {
           onChange={(e) => setSituation(e.target.value)}
           rows={5}
           placeholder={"Examples of what you might write:\n\n\"My yarn does 16 stitches per 4 inches. The pattern calls for 22.\"\n\n\"I'm using a much thicker yarn — Lion Brand Wool-Ease Thick & Quick on size 13 needles. My swatch came out to 12 stitches per 4 inches.\"\n\n\"I want to make the medium size but I knit very loosely so my gauge is always bigger than the pattern.\""}
-          className="w-full border-2 border-dashed border-[#9b2335]/20 hover:border-[#9b2335]/40 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 text-lg focus:outline-none resize-y transition-all duration-200 leading-relaxed"
+          className="w-full border-2 border-dashed border-[#e11d48]/20 hover:border-[#e11d48]/40 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg focus:outline-none resize-y transition-all duration-200 leading-relaxed"
         />
       </div>
 
@@ -351,7 +351,7 @@ function AiMode() {
       <button
         onClick={handleRun}
         disabled={!ready || running}
-        className="w-full py-6 bg-[#9b2335] text-white text-2xl font-bold rounded-3xl hover:bg-[#7d1c2a] hover:scale-[1.01] cursor-pointer transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-lg"
+        className="w-full py-6 bg-[#e11d48] text-white text-2xl font-bold rounded-3xl hover:bg-[#be123c] hover:scale-[1.01] cursor-pointer transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-lg"
       >
         {running ? "✨ Rewriting your pattern…" : "✨ Rewrite My Pattern"}
       </button>
@@ -364,8 +364,8 @@ function AiMode() {
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold text-gray-900">Your Rewritten Pattern</h2>
               {running && (
-                <span className="flex items-center gap-2 text-base text-[#9b2335] font-semibold">
-                  <span className="w-2 h-2 bg-[#9b2335] rounded-full animate-pulse" />Writing…
+                <span className="flex items-center gap-2 text-base text-[#e11d48] font-semibold">
+                  <span className="w-2 h-2 bg-[#e11d48] rounded-full animate-pulse" />Writing…
                 </span>
               )}
             </div>
@@ -373,13 +373,13 @@ function AiMode() {
               <div className="flex gap-3">
                 <button
                   onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                  className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
+                  className="text-lg font-bold text-gray-600 hover:text-[#e11d48] border-2 border-dashed border-gray-300 hover:border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
                 >
                   {copied ? "Copied! ✓" : "Copy to clipboard"}
                 </button>
                 <button
                   onClick={downloadPdf}
-                  className="text-lg font-bold text-white bg-[#9b2335] hover:bg-[#7d1c2a] border-2 border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
+                  className="text-lg font-bold text-white bg-[#e11d48] hover:bg-[#be123c] border-2 border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
                 >
                   {downloaded ? "Downloaded! ✓" : "⬇ Download My Pattern"}
                 </button>
@@ -389,7 +389,7 @@ function AiMode() {
           <div className="p-8">
             <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
               {output}
-              {running && <span className="inline-block w-0.5 h-5 bg-[#9b2335] animate-pulse ml-1 align-middle" />}
+              {running && <span className="inline-block w-0.5 h-5 bg-[#e11d48] animate-pulse ml-1 align-middle" />}
             </pre>
           </div>
         </div>
@@ -530,7 +530,7 @@ function CalcMode() {
           </div>
         ) : (
           <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
-            <span className={`text-5xl font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
+            <span className={`text-5xl font-bold ${tighter ? "text-[#e11d48]" : "text-emerald-600"}`}>
               {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
             </span>
             <span className="text-2xl text-gray-500">
@@ -563,7 +563,7 @@ function CalcMode() {
                   <div className="flex gap-2 mb-3">
                     {(["4inch", "inch"] as const).map((u) => (
                       <button key={u} onClick={() => setUnit(u)}
-                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#9b2335] border-[#9b2335] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#9b2335]/40"}`}>
+                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold border-2 transition-all duration-200 ${unit === u ? "border-solid bg-[#e11d48] border-[#e11d48] text-white" : "border-dashed border-gray-300 text-gray-400 hover:border-[#e11d48]/40"}`}>
                         {u === "4inch" ? "per 4 in" : "per inch"}
                       </button>
                     ))}
@@ -571,7 +571,7 @@ function CalcMode() {
                   <div className="flex items-center gap-3">
                     <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val}
                       onChange={(e) => set(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                      className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+                      className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
                     <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
                   </div>
                 </div>
@@ -593,7 +593,7 @@ function CalcMode() {
             <div className="flex bg-gray-100 rounded-xl p-1 gap-1 shrink-0 ml-4 mt-1">
               {(["yds", "m"] as const).map((u) => (
                 <button key={u} onClick={() => setYardUnit(u)}
-                  className={`px-4 py-1.5 rounded-lg text-base font-bold transition-all duration-200 ${yardUnit === u ? "bg-white text-[#9b2335] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
+                  className={`px-4 py-1.5 rounded-lg text-base font-bold transition-all duration-200 ${yardUnit === u ? "bg-white text-[#e11d48] shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
                   {u}
                 </button>
               ))}
@@ -609,7 +609,7 @@ function CalcMode() {
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 600" : "e.g. 660"} value={origYards}
                   onChange={(e) => setOrigYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
+                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
             </div>
@@ -621,7 +621,7 @@ function CalcMode() {
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 200" : "e.g. 220"} value={skeinsYards}
                   onChange={(e) => setSkeinsYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
+                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
             </div>
@@ -645,7 +645,7 @@ function CalcMode() {
                 </>
               )}
               {yardDiff !== null && Math.abs(yardDiff) > 5 && (
-                <span className={`text-base font-semibold ${yardDiff > 0 ? "text-[#9b2335]" : "text-emerald-600"}`}>
+                <span className={`text-base font-semibold ${yardDiff > 0 ? "text-[#e11d48]" : "text-emerald-600"}`}>
                   · {yardDiff > 0
                     ? `+${yardUnit === "m" ? Math.round(yardDiff / 1.09361) : yardDiff} more than the pattern`
                     : `${yardUnit === "m" ? Math.round(Math.abs(yardDiff) / 1.09361) : Math.abs(yardDiff)} less than the pattern`}
@@ -690,7 +690,7 @@ function CalcMode() {
           value={customSts}
           disabled={!hasScale}
           onChange={(e) => setCustomSts(e.target.value)}
-          className="w-full text-xl border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed"
+          className="w-full text-xl border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-300 disabled:bg-gray-50 disabled:cursor-not-allowed"
         />
         {multiConverted.length > 0 && (
           <div className="mt-6 border-t-2 border-dashed border-gray-100 pt-6">
@@ -699,7 +699,7 @@ function CalcMode() {
                 <div key={i} className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-0">
                   <span className="text-xl text-gray-500 w-32 text-right font-mono">{orig} sts</span>
                   <span className="text-2xl text-gray-200">→</span>
-                  <span className="text-2xl font-bold text-[#9b2335] w-32 font-mono">{converted} sts</span>
+                  <span className="text-2xl font-bold text-[#e11d48] w-32 font-mono">{converted} sts</span>
                   {orig !== converted && (
                     <span className={`text-sm font-semibold ${converted > orig ? "text-rose-500" : "text-emerald-600"}`}>
                       {converted > orig ? `+${converted - orig}` : `${converted - orig}`}
@@ -722,7 +722,7 @@ function CalcMode() {
               <div className="flex gap-3">
                 <button
                   onClick={async () => { await navigator.clipboard.writeText(calcReport); setCalcCopied(true); setTimeout(() => setCalcCopied(false), 2000); }}
-                  className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
+                  className="text-lg font-bold text-gray-600 hover:text-[#e11d48] border-2 border-dashed border-gray-300 hover:border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
                 >
                   {calcCopied ? "Copied! ✓" : "Copy to clipboard"}
                 </button>
@@ -734,7 +734,7 @@ function CalcMode() {
                     setCalcDownloaded(true);
                     setTimeout(() => setCalcDownloaded(false), 2000);
                   }}
-                  className="text-lg font-bold text-white bg-[#9b2335] hover:bg-[#7d1c2a] border-2 border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
+                  className="text-lg font-bold text-white bg-[#e11d48] hover:bg-[#be123c] border-2 border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
                 >
                   {calcDownloaded ? "Downloaded! ✓" : "⬇ Download My Report"}
                 </button>
@@ -746,27 +746,27 @@ function CalcMode() {
               <table className="w-full border-collapse text-base rounded-xl overflow-hidden">
                 <thead>
                   <tr>
-                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold w-1/3" />
-                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold">Pattern</th>
-                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold">Yours</th>
+                    <th className="bg-[#e11d48] text-white px-5 py-3 text-left font-semibold w-1/3" />
+                    <th className="bg-[#e11d48] text-white px-5 py-3 text-left font-semibold">Pattern</th>
+                    <th className="bg-[#e11d48] text-white px-5 py-3 text-left font-semibold">Yours</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-100">
-                    <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Stitch gauge</td>
+                    <td className="px-5 py-3 font-semibold text-[#e11d48] text-sm uppercase tracking-wide">Stitch gauge</td>
                     <td className="px-5 py-3 text-gray-700">{patSts} sts {patUnit === "4inch" ? "per 4 in" : "per in"}</td>
                     <td className="px-5 py-3 text-gray-700">{yourSts} sts {yourUnit === "4inch" ? "per 4 in" : "per in"}</td>
                   </tr>
                   {patRows && yourRows && (
                     <tr className="bg-[#faf7f5] border-b border-gray-100">
-                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Row gauge</td>
+                      <td className="px-5 py-3 font-semibold text-[#e11d48] text-sm uppercase tracking-wide">Row gauge</td>
                       <td className="px-5 py-3 text-gray-700">{patRows} rows {patRowUnit === "4inch" ? "per 4 in" : "per in"}</td>
                       <td className="px-5 py-3 text-gray-700">{yourRows} rows {yourRowUnit === "4inch" ? "per 4 in" : "per in"}</td>
                     </tr>
                   )}
                   {newYards !== null && origYardsNum > 0 && (
                     <tr className="border-b border-gray-100">
-                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Yardage needed</td>
+                      <td className="px-5 py-3 font-semibold text-[#e11d48] text-sm uppercase tracking-wide">Yardage needed</td>
                       <td className="px-5 py-3 text-gray-700">
                         {yardUnit === "m" ? `${parseFloat(origYards).toLocaleString()} m` : `${Math.round(origYardsNum).toLocaleString()} yds`}
                       </td>
@@ -777,7 +777,7 @@ function CalcMode() {
                   )}
                   {skeinsNeeded !== null && (
                     <tr className="bg-[#faf7f5]">
-                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Skeins to buy</td>
+                      <td className="px-5 py-3 font-semibold text-[#e11d48] text-sm uppercase tracking-wide">Skeins to buy</td>
                       <td className="px-5 py-3 text-gray-400">—</td>
                       <td className="px-5 py-3">
                         <span className="text-2xl font-bold text-emerald-600">{skeinsNeeded}</span>
@@ -797,7 +797,7 @@ function CalcMode() {
                     <p className="text-base text-gray-800">
                       <span className="font-bold">Scale factor: {stitchScale!.toFixed(3)}</span>
                       {" — "}your gauge is{" "}
-                      <span className={`font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
+                      <span className={`font-bold ${tighter ? "text-[#e11d48]" : "text-emerald-600"}`}>
                         {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
                       </span>
                       {" "}than the pattern.
@@ -808,7 +808,7 @@ function CalcMode() {
                     {yardDiff !== null && Math.abs(yardDiff) > 5 && (
                       <p className="text-base text-gray-700">
                         You will need{" "}
-                        <span className={`font-bold ${yardDiff > 0 ? "text-[#9b2335]" : "text-emerald-600"}`}>
+                        <span className={`font-bold ${yardDiff > 0 ? "text-[#e11d48]" : "text-emerald-600"}`}>
                           {yardUnit === "m"
                             ? `${Math.abs(Math.round(yardDiff / 1.09361))} m`
                             : `${Math.abs(yardDiff)} yds`}
@@ -830,7 +830,7 @@ function CalcMode() {
                       <div key={i} className="flex items-center gap-3">
                         <span className="text-base text-gray-600 w-24 text-right font-mono">{orig} sts</span>
                         <span className="text-gray-300">→</span>
-                        <span className="text-base font-bold text-[#9b2335] font-mono">{converted} sts</span>
+                        <span className="text-base font-bold text-[#e11d48] font-mono">{converted} sts</span>
                         {orig !== converted && (
                           <span className={`text-xs font-semibold ${converted > orig ? "text-rose-500" : "text-emerald-600"}`}>
                             {converted > orig ? `+${converted - orig}` : `${converted - orig}`}
@@ -857,16 +857,16 @@ export default function GaugeCalculator({ username }: { username: string }) {
 
   return (
     <div className="min-h-screen" style={{ background: "#f7f3ee" }}>
-      <header className="bg-white border-b-2 border-dashed border-[#9b2335]/20 px-8 py-4 flex items-center justify-between">
+      <header className="bg-white border-b-2 border-dashed border-[#e11d48]/20 px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-xl font-bold text-gray-900 hover:text-[#9b2335] transition-colors">CraftersKit</Link>
-          <span className="text-[#9b2335]/30 text-xl font-bold">- - -</span>
-          <span className="text-lg font-bold text-[#9b2335]">Gauge Calculator</span>
+          <Link href="/" className="text-xl font-bold text-gray-900 hover:text-[#e11d48] transition-colors">CraftersKit</Link>
+          <span className="text-[#e11d48]/30 text-xl font-bold">- - -</span>
+          <span className="text-lg font-bold text-[#e11d48]">Gauge Calculator</span>
         </div>
         {username && (
           <div className="flex items-center gap-4">
             <span className="text-base text-gray-400">@{username}</span>
-            <a href="/api/auth/signout" className="text-base text-gray-400 hover:text-[#9b2335] transition-colors">Sign out</a>
+            <a href="/api/auth/signout" className="text-base text-gray-400 hover:text-[#e11d48] transition-colors">Sign out</a>
           </div>
         )}
       </header>
@@ -886,7 +886,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
               onClick={() => setMode("ai")}
               className={`px-10 py-4 rounded-xl text-2xl font-bold transition-all duration-200 ${
                 mode === "ai"
-                  ? "bg-[#9b2335] text-white shadow-md"
+                  ? "bg-[#e11d48] text-white shadow-md"
                   : "text-gray-400 hover:text-gray-700"
               }`}
             >
@@ -896,7 +896,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
               onClick={() => setMode("calc")}
               className={`px-10 py-4 rounded-xl text-2xl font-bold transition-all duration-200 ${
                 mode === "calc"
-                  ? "bg-[#9b2335] text-white shadow-md"
+                  ? "bg-[#e11d48] text-white shadow-md"
                   : "text-gray-400 hover:text-gray-700"
               }`}
             >

@@ -257,9 +257,9 @@ export default function SearchInterface({ username }: { username: string | null 
     >
       {/* Drag overlay */}
       {dragging && (
-        <div className="fixed inset-0 z-50 bg-[#9b2335]/10 border-4 border-dashed border-[#9b2335] flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-50 bg-[#e11d48]/10 border-4 border-dashed border-[#e11d48] flex items-center justify-center pointer-events-none">
           <div className="bg-white rounded-2xl px-10 py-8 shadow-xl flex flex-col items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#9b2335]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-[#e11d48]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
             </svg>
             <p className="text-lg font-semibold text-gray-800">Drop image to search</p>
@@ -273,7 +273,7 @@ export default function SearchInterface({ username }: { username: string | null 
           <h1 className="text-xl font-bold text-gray-900">CraftersKit</h1>
           <Link
             href="/gauge-calculator"
-            className="text-sm text-gray-400 hover:text-[#9b2335] transition-colors font-medium"
+            className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium"
           >
             Gauge Calculator
           </Link>
@@ -328,12 +328,12 @@ export default function SearchInterface({ username }: { username: string | null 
                 onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                 placeholder={imagePreview ? "Image selected — hit Search" : "e.g. cozy cabled sweater in worsted weight for women"}
                 disabled={!!imagePreview}
-                className="w-full border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#9b2335] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
+                className="w-full border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e11d48] focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
               />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#9b2335] transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#e11d48] transition-colors"
                 title="Search by image"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -365,7 +365,7 @@ export default function SearchInterface({ username }: { username: string | null 
             <button
               type="submit"
               disabled={loading || (!query.trim() && !imageData)}
-              className="bg-[#9b2335] hover:bg-[#7d1c2a] disabled:bg-gray-300 text-white font-semibold px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
+              className="bg-[#e11d48] hover:bg-[#be123c] disabled:bg-gray-300 text-white font-semibold px-6 py-3 rounded-lg transition-colors whitespace-nowrap"
             >
               {loading ? "Searching..." : "Search"}
             </button>
