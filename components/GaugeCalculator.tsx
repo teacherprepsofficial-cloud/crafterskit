@@ -504,7 +504,7 @@ function CalcMode() {
           className="w-full px-7 py-5 flex items-center justify-between text-left hover:bg-white transition-all duration-200">
           <div>
             <span className="text-lg font-bold text-gray-700">Add row gauge for more accurate yardage</span>
-            <span className="text-base text-gray-400 ml-3">(optional — most people skip this)</span>
+            <span className="text-base text-gray-400 ml-3">(optional)</span>
           </div>
           <span className="text-2xl text-gray-400">{showRows ? "↑" : "↓"}</span>
         </button>
