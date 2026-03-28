@@ -209,8 +209,7 @@ function buildPdfHtml(content: string): string {
     table{print-color-adjust:exact;-webkit-print-color-adjust:exact;page-break-inside:avoid}
     th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
     h1,h2{page-break-after:avoid}
-    .footer{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:8px}
-    @page{margin:.5in .65in .65in}
+    @page{margin:.5in .65in .75in}
   }
 </style></head><body>
 <div class="header"><span class="brand">CraftersKit.com</span><span class="sub">Your Adapted Pattern</span></div>
