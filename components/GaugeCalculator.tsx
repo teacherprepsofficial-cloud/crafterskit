@@ -221,6 +221,60 @@ function buildPdfHtml(content: string): string {
 </body></html>`;
 }
 
+// ─── MARKDOWN RENDERER ────────────────────────────────────────────────────────
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/);
+  return parts.map((part, j) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <strong key={j} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*"))
+      return <em key={j}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (t.startsWith("|")) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) { tableLines.push(lines[i].trim()); i++; }
+      const rows = tableLines.filter(l => !/^\|[\s:\-|]+\|$/.test(l));
+      elements.push(
+        <table key={i} className="w-full border-collapse my-5 text-sm rounded-xl overflow-hidden">
+          <tbody>
+            {rows.map((row, ri) => {
+              const cells = row.split("|").slice(1, -1);
+              return (
+                <tr key={ri} className={ri % 2 === 1 ? "bg-[#faf7f5]" : ""}>
+                  {cells.map((cell, ci) => ri === 0
+                    ? <th key={ci} className="bg-[#e11d48] text-white px-4 py-3 text-left font-semibold">{renderInline(cell.trim())}</th>
+                    : <td key={ci} className={`px-4 py-2.5 border-b border-gray-100 ${ci === 0 ? "font-semibold text-[#e11d48]" : "text-gray-700"}`}>{renderInline(cell.trim())}</td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      );
+      continue;
+    }
+    if (/^# /.test(t))          elements.push(<h1 key={i} className="text-2xl font-bold text-[#e11d48] mt-6 mb-2 leading-snug">{renderInline(t.slice(2))}</h1>);
+    else if (/^## /.test(t))    elements.push(<h2 key={i} className="text-lg font-bold text-gray-900 mt-5 mb-2 pb-1 border-b border-gray-200">{renderInline(t.slice(3))}</h2>);
+    else if (/^### /.test(t))   elements.push(<h3 key={i} className="text-base font-bold text-gray-800 mt-4 mb-1">{renderInline(t.slice(4))}</h3>);
+    else if (/^-{3,}$/.test(t)) elements.push(<hr key={i} className="my-4 border-gray-200" />);
+    else if (/^> /.test(t))     elements.push(<blockquote key={i} className="bg-[#faf7f5] border-l-4 border-[#e11d48] px-4 py-2 my-3 text-gray-600 italic text-sm rounded-r-lg">{renderInline(t.slice(2))}</blockquote>);
+    else if (/^[-•]\s/.test(t)) elements.push(<li key={i} className="ml-5 my-1 list-disc text-gray-700 text-base leading-relaxed">{renderInline(t.replace(/^[-•]\s/, ""))}</li>);
+    else if (t === "")          elements.push(<div key={i} className="h-2" />);
+    else                        elements.push(<p key={i} className="text-gray-700 text-base leading-relaxed my-1.5">{renderInline(t)}</p>);
+    i++;
+  }
+  return <div>{elements}</div>;
+}
+
 // ─── AI MODE ──────────────────────────────────────────────────────────────────
 function AiMode() {
   const [patternText, setPatternText] = useState("");
@@ -387,10 +441,14 @@ function AiMode() {
             )}
           </div>
           <div className="p-8">
-            <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
-              {output}
-              {running && <span className="inline-block w-0.5 h-5 bg-[#e11d48] animate-pulse ml-1 align-middle" />}
-            </pre>
+            {running ? (
+              <pre className="text-base text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">
+                {output}
+                <span className="inline-block w-0.5 h-5 bg-[#e11d48] animate-pulse ml-1 align-middle" />
+              </pre>
+            ) : (
+              <MarkdownRenderer content={output} />
+            )}
           </div>
         </div>
       )}
