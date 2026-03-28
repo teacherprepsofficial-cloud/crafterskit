@@ -204,8 +204,8 @@ function buildPdfHtml(content: string): string {
   strong{color:#111;font-weight:600}
   .footer{text-align:center;color:#bbb;font-size:8.5pt;margin-top:48px;padding-top:14px;border-top:1px solid #eee}
   @media print{
-    .header{print-color-adjust:exact;-webkit-print-color-adjust:exact;position:fixed;top:0;left:0;right:0}
-    .wrap{padding-top:74px}
+    .header{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .wrap{padding-top:24px}
     table{print-color-adjust:exact;-webkit-print-color-adjust:exact;page-break-inside:avoid}
     th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
     h1,h2{page-break-after:avoid}
