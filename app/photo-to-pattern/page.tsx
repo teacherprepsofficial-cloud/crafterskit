@@ -134,8 +134,11 @@ export default function PhotoToPatternPage() {
           });
           tbl += "</table>";
           out.push(tbl);
-        } else if (line === "") {
-          out.push("");
+        } else if (line === "" || /^---+$/.test(line.trim())) {
+          // skip blank lines and horizontal rules
+          i++;
+        } else if (line.startsWith("### ")) {
+          out.push(`<h3 class="sub-section">${inlineBold(line.slice(4))}</h3>`);
           i++;
         } else if (line.startsWith("- ")) {
           out.push(`<li>${inlineBold(line.slice(2))}</li>`);
@@ -143,8 +146,7 @@ export default function PhotoToPatternPage() {
         } else if (/^\*\*/.test(line)) {
           const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
           if (m) {
-            const isInstr = /^(Row|Round|Rnd|Section|Setup|Abbreviations|Cast|Bind|Finishing|Thumb|Cuff|Hand|Body|Sleeve|Neck|Hem|Rib)/.test(m[1]);
-            out.push(`<p class="${isInstr ? "instr-head" : ""}"><strong>${m[1]}:</strong> ${inlineBold(m[2])}</p>`);
+            out.push(`<p class="instr-head"><strong>${m[1]}:</strong> ${inlineBold(m[2])}</p>`);
           } else {
             out.push(`<p>${inlineBold(line)}</p>`);
           }
@@ -198,6 +200,7 @@ export default function PhotoToPatternPage() {
   .notes h2 { font-style: normal; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; margin-bottom: 6px; }
   .disclaimer { background: #fffbf0; border: 1px solid #fde68a; border-radius: 5px; padding: 8px 12px; margin-top: 12px; font-size: 8.5pt; color: #78350f; font-style: italic; }
   .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e5e5; font-size: 7.5pt; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
+  h3.sub-section { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; color: #1a1a1a; margin: 14px 0 4px; border-bottom: 1px solid #e5e5e5; padding-bottom: 3px; }
   .md-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 4px 0; }
   .md-table th { background: #be123c; color: #fff; font-family: Arial, sans-serif; font-size: 9pt; font-weight: 700; text-align: left; padding: 5px 8px; }
   .md-table td { padding: 4px 8px; border-bottom: 1px solid #f0d0d0; vertical-align: top; }
@@ -256,7 +259,12 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
     let i = 0;
     while (i < lines.length) {
       const line = lines[i];
-      if (!line.trim()) { i++; continue; }
+      if (!line.trim() || /^---+$/.test(line.trim())) { i++; continue; }
+      // ### subheading
+      if (line.startsWith("### ")) {
+        out.push(<h4 key={`h3-${i}`} className="text-sm font-bold text-gray-800 mt-4 mb-1 border-b border-gray-200 pb-1">{line.slice(4)}</h4>);
+        i++; continue;
+      }
       // Markdown table
       if (line.trim().startsWith("|") && line.includes("|", 1)) {
         const tblLines: string[] = [];
