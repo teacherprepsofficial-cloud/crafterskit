@@ -70,7 +70,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.username = token.name;
+        token.expiresAt = Date.now() + (account.expires_in as number ?? 3600) * 1000;
       }
+
+      // Still valid with 60s buffer — return as-is
+      if (token.expiresAt && Date.now() < (token.expiresAt as number) - 60_000) {
+        return token;
+      }
+
+      // Access token expired — try to refresh
+      if (token.refreshToken) {
+        try {
+          const credentials = Buffer.from(
+            `${process.env.RAVELRY_CLIENT_ID!.trim()}:${process.env.RAVELRY_CLIENT_SECRET!.trim()}`
+          ).toString("base64");
+          const res = await fetch("https://www.ravelry.com/oauth2/token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              Authorization: `Basic ${credentials}`,
+            },
+            body: new URLSearchParams({
+              grant_type: "refresh_token",
+              refresh_token: token.refreshToken as string,
+            }),
+          });
+          if (res.ok) {
+            const refreshed = await res.json();
+            token.accessToken = refreshed.access_token;
+            if (refreshed.refresh_token) token.refreshToken = refreshed.refresh_token;
+            token.expiresAt = Date.now() + (refreshed.expires_in ?? 3600) * 1000;
+          }
+        } catch {
+          // Refresh failed — keep existing token, will fail on API call
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

@@ -98,6 +98,11 @@ export async function POST(req: NextRequest) {
 
     const session = await auth();
     const userToken = (session as any)?.accessToken as string | undefined;
+    const userRefreshToken = (session as any)?.refreshToken as string | undefined;
+
+    const credentials = Buffer.from(
+      `${process.env.RAVELRY_CLIENT_ID!.trim()}:${process.env.RAVELRY_CLIENT_SECRET!.trim()}`
+    ).toString("base64");
 
     async function ravelrySearch(p: Record<string, string>, token: string) {
       return fetch(
@@ -106,15 +111,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    async function refreshUserToken(): Promise<string | null> {
+      if (!userRefreshToken) return null;
+      try {
+        const res = await fetch("https://www.ravelry.com/oauth2/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${credentials}` },
+          body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: userRefreshToken }),
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        return data.access_token ?? null;
+      } catch { return null; }
+    }
+
     const interpretedAs = searchParams.interpreted_as ?? null;
     const { interpreted_as: _drop, ...ravelryParams } = searchParams;
 
-    // Try user bearer token first; fall back to app refresh token if expired/missing
+    // Try user token; if it fails, refresh it; if no user token try app token
     let activeToken = userToken ?? await getRavelryToken();
     let ravelryRes = await ravelrySearch(ravelryParams, activeToken);
-    if (!ravelryRes.ok && userToken) {
-      activeToken = await getRavelryToken();
-      ravelryRes = await ravelrySearch(ravelryParams, activeToken);
+    if (!ravelryRes.ok) {
+      const fresh = userToken ? await refreshUserToken() : null;
+      if (fresh) {
+        activeToken = fresh;
+        ravelryRes = await ravelrySearch(ravelryParams, fresh);
+      } else if (userToken) {
+        // last resort: app token
+        try { activeToken = await getRavelryToken(); ravelryRes = await ravelrySearch(ravelryParams, activeToken); } catch { /* ignore */ }
+      }
     }
 
     if (!ravelryRes.ok) {
