@@ -428,7 +428,6 @@ function CalcMode() {
   const newYards = hasScale && rowScale && !isNaN(origYardsNum) && origYardsNum > 0
     ? origYardsNum * stitchScale! * rowScale : null;
   const yardDiff = newYards !== null ? Math.round(newYards - origYardsNum) : null;
-  const rowsEstimated = !pRowsPerIn || !yRowsPerIn;
   const skeinsNum = yardUnit === "m"
     ? parseFloat(skeinsYards) * 1.09361
     : parseFloat(skeinsYards);
@@ -696,8 +695,8 @@ function CalcMode() {
         {multiConverted.length > 0 && (
           <div className="mt-6 border-t-2 border-dashed border-gray-100 pt-6">
             <div className="grid gap-3">
-              {multiConverted.map(({ orig, converted }) => (
-                <div key={orig} className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-0">
+              {multiConverted.map(({ orig, converted }, i) => (
+                <div key={i} className="flex items-center gap-4 py-2 border-b border-gray-50 last:border-0">
                   <span className="text-xl text-gray-500 w-32 text-right font-mono">{orig} sts</span>
                   <span className="text-2xl text-gray-200">→</span>
                   <span className="text-2xl font-bold text-[#9b2335] w-32 font-mono">{converted} sts</span>
@@ -827,8 +826,8 @@ function CalcMode() {
                 <div className="border-t-2 border-dashed border-gray-100 pt-4">
                   <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">Stitch Conversions</p>
                   <div className="grid gap-2">
-                    {multiConverted.map(({ orig, converted }) => (
-                      <div key={orig} className="flex items-center gap-3">
+                    {multiConverted.map(({ orig, converted }, i) => (
+                      <div key={i} className="flex items-center gap-3">
                         <span className="text-base text-gray-600 w-24 text-right font-mono">{orig} sts</span>
                         <span className="text-gray-300">→</span>
                         <span className="text-base font-bold text-[#9b2335] font-mono">{converted} sts</span>
