@@ -47,6 +47,7 @@ Rewrite the full pattern instructions with every stitch count and row count chan
 
 RULES:
 - No jargon without a one-word explanation in parentheses
+- Decrease directions: SSK leans LEFT, K2tog leans RIGHT — never swap these
 - No emojis
 - No long explanations before the numbers — the numbers come first, always
 - If there's a stitch repeat issue, handle it in "Your Numbers at a Glance" with a one-line note
