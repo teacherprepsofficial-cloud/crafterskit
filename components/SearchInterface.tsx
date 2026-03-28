@@ -143,9 +143,20 @@ export default function SearchInterface({ username }: { username: string | null 
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
       setImagePreview(dataUrl);
-      const [meta, base64] = dataUrl.split(",");
-      const mimeType = meta.match(/:(.*?);/)?.[1] ?? "image/jpeg";
-      setImageData({ base64, mimeType });
+      // Resize to max 800px to keep payload small
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const resized = canvas.toDataURL("image/jpeg", 0.85);
+        const base64 = resized.split(",")[1];
+        setImageData({ base64, mimeType: "image/jpeg" });
+      };
+      img.src = dataUrl;
     };
     reader.readAsDataURL(file);
   }
