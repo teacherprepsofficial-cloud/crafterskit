@@ -149,7 +149,83 @@ function AiMode() {
   const [output, setOutput] = useState("");
   const [running, setRunning] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const [err, setErr] = useState("");
+
+  async function downloadPdf() {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 56;
+    const contentW = pageW - margin * 2;
+    const brand = "#9b2335";
+
+    function drawHeaderFooter(pageNum: number, totalPages: number) {
+      // Header bar
+      doc.setFillColor(brand);
+      doc.rect(0, 0, pageW, 44, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor("#ffffff");
+      doc.text("CraftersKit.com", margin, 28);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text("Your Adapted Pattern", pageW - margin, 28, { align: "right" });
+      // Footer
+      doc.setFontSize(9);
+      doc.setTextColor("#aaaaaa");
+      doc.text(`© CraftersKit.com  •  crafterskit.com  •  Page ${pageNum} of ${totalPages}`, pageW / 2, pageH - 20, { align: "center" });
+    }
+
+    // First pass: split all lines and measure pages
+    const lines: Array<{ text: string; style: "h1" | "h2" | "h3" | "body"; size: number; bold: boolean }> = [];
+    for (const raw of output.split("\n")) {
+      const line = raw.trimEnd();
+      if (line.startsWith("### ")) lines.push({ text: line.slice(4), style: "h3", size: 13, bold: true });
+      else if (line.startsWith("## ")) lines.push({ text: line.slice(3), style: "h2", size: 15, bold: true });
+      else if (line.startsWith("# ")) lines.push({ text: line.slice(2), style: "h1", size: 18, bold: true });
+      else lines.push({ text: line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1"), style: "body", size: 11, bold: false });
+    }
+
+    // Count total pages
+    let y = 68;
+    let totalPages = 1;
+    for (const line of lines) {
+      doc.setFontSize(line.size);
+      const wrapped = doc.splitTextToSize(line.text || " ", contentW);
+      const lineH = line.size * 1.5;
+      const blockH = wrapped.length * lineH + (line.style !== "body" ? 6 : 2);
+      if (y + blockH > pageH - 40) { totalPages++; y = 68; }
+      y += blockH;
+    }
+
+    // Second pass: render
+    let page = 1;
+    y = 68;
+    drawHeaderFooter(page, totalPages);
+    for (const line of lines) {
+      doc.setFontSize(line.size);
+      doc.setFont("helvetica", line.bold ? "bold" : "normal");
+      doc.setTextColor(line.style === "h1" ? brand : line.style === "h2" ? "#333333" : "#444444");
+      const wrapped = doc.splitTextToSize(line.text || " ", contentW);
+      const lineH = line.size * 1.5;
+      const blockH = wrapped.length * lineH + (line.style !== "body" ? 6 : 2);
+      if (y + blockH > pageH - 40) {
+        doc.addPage();
+        page++;
+        drawHeaderFooter(page, totalPages);
+        y = 68;
+      }
+      doc.text(wrapped, margin, y);
+      y += blockH;
+    }
+
+    doc.save("my-adapted-pattern-crafterskit.pdf");
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2000);
+  }
 
   async function handlePdfFile(file: File) {
     setPdfName(file.name);
@@ -268,12 +344,20 @@ function AiMode() {
               )}
             </div>
             {output && !running && (
-              <button
-                onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-                className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
-              >
-                {copied ? "Copied! ✓" : "Copy to clipboard"}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
+                >
+                  {copied ? "Copied! ✓" : "Copy to clipboard"}
+                </button>
+                <button
+                  onClick={downloadPdf}
+                  className="text-lg font-bold text-white bg-[#9b2335] hover:bg-[#7d1c2a] border-2 border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
+                >
+                  {downloaded ? "Downloaded! ✓" : "⬇ Download My Pattern"}
+                </button>
+              </div>
             )}
           </div>
           <div className="p-8">

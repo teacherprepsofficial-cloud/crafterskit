@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",
+    "jspdf": "^4.2.1",
     "next": "16.2.1",
     "next-auth": "^5.0.0-beta.30",
     "pdfjs-dist": "^5.5.207",
