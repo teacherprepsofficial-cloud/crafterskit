@@ -181,8 +181,10 @@ function AiMode() {
     type Seg = { type: "h1"|"h2"|"h3"|"body"|"quote"|"bullet"|"divider"|"blank"; text: string };
     const segs: Seg[] = [];
     for (const raw of output.split("\n")) {
-      const line = raw.trimEnd();
-      const clean = (s: string) => s.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+      const line = raw.trim();
+      // Strip emoji (anything outside basic Latin + Latin Extended)
+      const stripEmoji = (s: string) => s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}]/gu, "").trim();
+      const clean = (s: string) => stripEmoji(s.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1"));
       if (/^-{3,}$/.test(line) || /^\*{3,}$/.test(line)) segs.push({ type: "divider", text: "" });
       else if (line.startsWith("### ")) segs.push({ type: "h3", text: clean(line.slice(4)) });
       else if (line.startsWith("## "))  segs.push({ type: "h2", text: clean(line.slice(3)) });
