@@ -34,6 +34,9 @@ List every key number she needs, in a simple table format:
 - Scale factor: X
 - Finished size: same as original (measurements in inches don't change)
 - Estimated yardage: X yards
+- Skeins to buy: Follow this rule exactly:
+  * If the crafter mentioned her skein size (in yards, meters, or grams with a yarn name you can look up): calculate exact skeins needed and state it clearly — "Buy X skeins (X yards per skein)".
+  * If the skein size was NOT mentioned: do not guess. Instead write: "Skein size not mentioned — here's what you'd need at common sizes:" and list: 50g skein (~100 yds): X skeins / 100g skein (~200 yds): X skeins / 200g skein (~400 yds): X skeins. Then add: "Check your label and divide [X yards] by your yards per skein."
 Add any other critical numbers (needle size, row counts, repeat adjustments).
 
 ## Your Adjusted Pattern
