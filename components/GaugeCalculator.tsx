@@ -294,7 +294,7 @@ function CalcMode() {
   const [patUnit, setPatUnit] = useState<"inch" | "4inch">("4inch");
   const [yourSts, setYourSts] = useState("");
   const [yourUnit, setYourUnit] = useState<"inch" | "4inch">("4inch");
-  const [showRows, setShowRows] = useState(false);
+  const [showRows, setShowRows] = useState(true);
   const [patRows, setPatRows] = useState("");
   const [patRowUnit, setPatRowUnit] = useState<"inch" | "4inch">("4inch");
   const [yourRows, setYourRows] = useState("");
