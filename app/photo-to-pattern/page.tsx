@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 
 export default function PhotoToPatternPage() {
@@ -242,37 +242,37 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
     setTimeout(() => { win.print(); }, 500);
   }
 
-  function applyInlineBold(text: string, baseClass = "text-gray-800") {
+  function bold(text: string) {
     const parts = text.split(/\*\*([^*]+)\*\*/g);
     return parts.map((part, i) =>
-      i % 2 === 1 ? <strong key={i} className="font-semibold text-gray-900">{part}</strong> : <span key={i} className={baseClass}>{part}</span>
+      i % 2 === 1
+        ? <strong key={i} className="font-semibold text-gray-900">{part}</strong>
+        : <React.Fragment key={i}>{part}</React.Fragment>
     );
   }
 
-  function renderOutput(text: string) {
-    const lines = text.split("\n");
-    const elements: React.ReactNode[] = [];
+  function parseLines(lines: string[]) {
+    const out: React.ReactNode[] = [];
     let i = 0;
     while (i < lines.length) {
       const line = lines[i];
+      if (!line.trim()) { i++; continue; }
       // Markdown table
-      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
-        const tableLines: string[] = [];
-        while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
-          tableLines.push(lines[i]); i++;
-        }
-        const dataRows = tableLines.filter(l => !/^\|[-| :]+\|$/.test(l.trim()));
-        elements.push(
-          <div key={i} className="overflow-x-auto my-3">
+      if (line.trim().startsWith("|") && line.includes("|", 1)) {
+        const tblLines: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) { tblLines.push(lines[i]); i++; }
+        const rows = tblLines.filter(l => !/^\|[\s|:-]+\|$/.test(l.trim()));
+        out.push(
+          <div key={`tbl-${i}`} className="overflow-x-auto my-3 rounded-lg border border-rose-200">
             <table className="w-full text-sm border-collapse">
               <tbody>
-                {dataRows.map((row, ri) => {
+                {rows.map((row, ri) => {
                   const cells = row.split("|").slice(1, -1);
                   return (
-                    <tr key={ri} className={ri === 0 ? "bg-[#be123c] text-white" : ri % 2 === 0 ? "bg-white" : "bg-rose-50"}>
+                    <tr key={ri} className={ri === 0 ? "bg-[#be123c] text-white" : ri % 2 === 1 ? "bg-rose-50" : "bg-white"}>
                       {cells.map((cell, ci) => ri === 0
-                        ? <th key={ci} className="text-left px-3 py-1.5 font-semibold text-xs uppercase tracking-wide">{cell.trim()}</th>
-                        : <td key={ci} className="px-3 py-1.5 border-b border-rose-100">{applyInlineBold(cell.trim())}</td>
+                        ? <th key={ci} className="text-left px-3 py-2 font-semibold text-xs uppercase tracking-wide whitespace-nowrap">{cell.trim()}</th>
+                        : <td key={ci} className="px-3 py-1.5 border-t border-rose-100">{bold(cell.trim())}</td>
                       )}
                     </tr>
                   );
@@ -283,17 +283,92 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
         );
         continue;
       }
-      if (line.startsWith("## ")) { elements.push(<h2 key={i} className="text-xl font-bold text-gray-900 mt-6 mb-2">{line.slice(3)}</h2>); i++; continue; }
+      // Bullet
+      if (line.startsWith("- ")) {
+        const items: string[] = [];
+        while (i < lines.length && lines[i].startsWith("- ")) { items.push(lines[i].slice(2)); i++; }
+        out.push(
+          <ul key={`ul-${i}`} className="my-2 space-y-1 list-disc list-outside pl-5">
+            {items.map((item, ii) => <li key={ii} className="text-gray-800 text-sm leading-relaxed">{bold(item)}</li>)}
+          </ul>
+        );
+        continue;
+      }
+      // Bold heading line (e.g. **Row 1 (RS):** ...)
       if (/^\*\*/.test(line)) {
         const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-        if (m) { elements.push(<p key={i} className="mt-1"><span className="font-semibold text-gray-900">{m[1]}:</span> <span className="text-gray-800"> {applyInlineBold(m[2])}</span></p>); i++; continue; }
+        if (m) {
+          out.push(<p key={`bh-${i}`} className="text-sm mt-2"><span className="font-semibold text-[#be123c]">{m[1]}:</span> <span className="text-gray-800">{bold(m[2])}</span></p>);
+        } else {
+          out.push(<p key={`p-${i}`} className="text-sm text-gray-800 mt-1">{bold(line)}</p>);
+        }
+        i++; continue;
       }
-      if (line.startsWith("- ")) { elements.push(<li key={i} className="ml-4 text-gray-800 list-disc">{applyInlineBold(line.slice(2))}</li>); i++; continue; }
-      if (line === "") { elements.push(<div key={i} className="h-2" />); i++; continue; }
-      elements.push(<p key={i} className="text-gray-800">{applyInlineBold(line)}</p>);
+      out.push(<p key={`p-${i}`} className="text-sm text-gray-700 mt-1">{bold(line)}</p>);
       i++;
     }
-    return elements;
+    return out;
+  }
+
+  function renderOutput(text: string) {
+    const allLines = text.split("\n");
+    const sections: Record<string, string[]> = { about: [], canSee: [], gauge: [], sizing: [], instructions: [], notes: [] };
+    let cur = "about";
+    for (const line of allLines) {
+      if (line.startsWith("## About")) { cur = "about"; continue; }
+      if (line.startsWith("## What I Can See")) { cur = "canSee"; continue; }
+      if (line.startsWith("## Gauge")) { cur = "gauge"; continue; }
+      if (line.startsWith("## Sizing")) { cur = "sizing"; continue; }
+      if (line.startsWith("## Pattern Instructions")) { cur = "instructions"; continue; }
+      if (line.startsWith("## Notes")) { cur = "notes"; continue; }
+      sections[cur]?.push(line);
+    }
+
+    const SectionHead = ({ title }: { title: string }) => (
+      <h3 className="text-xs font-bold uppercase tracking-widest text-[#be123c] border-b border-rose-200 pb-1 mb-3 mt-5">{title}</h3>
+    );
+
+    return (
+      <div className="space-y-1">
+        {sections.about.filter(Boolean).length > 0 && (
+          <p className="text-sm text-gray-600 italic mb-4">{sections.about.filter(Boolean).join(" ")}</p>
+        )}
+        {sections.canSee.filter(Boolean).length > 0 && (
+          <div>
+            <SectionHead title="What I Can See" />
+            <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">{parseLines(sections.canSee)}</div>
+          </div>
+        )}
+        {(sections.gauge.filter(Boolean).length > 0 || sections.sizing.filter(Boolean).length > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+            {sections.gauge.filter(Boolean).length > 0 && (
+              <div>
+                <SectionHead title="Gauge & Materials" />
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">{parseLines(sections.gauge)}</div>
+              </div>
+            )}
+            {sections.sizing.filter(Boolean).length > 0 && (
+              <div>
+                <SectionHead title="Sizing" />
+                <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">{parseLines(sections.sizing)}</div>
+              </div>
+            )}
+          </div>
+        )}
+        {sections.instructions.filter(Boolean).length > 0 && (
+          <div>
+            <SectionHead title="Pattern Instructions" />
+            {parseLines(sections.instructions)}
+          </div>
+        )}
+        {sections.notes.filter(Boolean).length > 0 && (
+          <div>
+            <SectionHead title="Notes" />
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900 italic">{sections.notes.filter(Boolean).join(" ")}</div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
