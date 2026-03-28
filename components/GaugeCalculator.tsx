@@ -74,7 +74,7 @@ function GaugeInput({
           onChange={(e) => onChange(e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
           onKeyDown={blockLetters}
-          className={`w-40 text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#e11d48]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
+          className={`w-full sm:w-40 text-4xl sm:text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#e11d48]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
         />
         <span className="text-xl text-gray-400 font-medium leading-tight">
           stitches<br />
@@ -347,8 +347,8 @@ function AiMode() {
     <div className="space-y-6">
 
       {/* Box 1 — Pattern instructions */}
-      <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Step 1 — Paste the original pattern instructions here</h2>
+      <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-5 sm:p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
+        <h2 className="text-xl sm:text-3xl font-bold text-gray-900 mb-2">Step 1 — Paste the original pattern instructions here</h2>
         <p className="text-lg text-gray-400 mb-5">
           Copy and paste the written instructions from your pattern — the part that tells you how many stitches to cast on, how many rows to knit, etc.
           Or just upload the PDF directly.
@@ -386,8 +386,8 @@ function AiMode() {
       </div>
 
       {/* Box 2 — Describe situation */}
-      <div className="bg-white border-2 border-dashed border-[#e11d48]/30 rounded-3xl p-8 hover:border-[#e11d48]/60 hover:shadow-md transition-all duration-200">
-        <h2 className="text-3xl font-bold text-[#e11d48] mb-2">Step 2 — Let us know how you&apos;re looking to change the pattern</h2>
+      <div className="bg-white border-2 border-dashed border-[#e11d48]/30 rounded-3xl p-5 sm:p-8 hover:border-[#e11d48]/60 hover:shadow-md transition-all duration-200">
+        <h2 className="text-xl sm:text-3xl font-bold text-[#e11d48] mb-2">Step 2 — Let us know how you&apos;re looking to change the pattern</h2>
         <p className="text-lg text-gray-400 mb-6">
           You can just type in normal language and our AI calculator will figure it out.
         </p>
@@ -404,7 +404,7 @@ function AiMode() {
       <button
         onClick={handleRun}
         disabled={!ready || running}
-        className="w-full py-6 bg-[#e11d48] text-white text-2xl font-bold rounded-3xl hover:bg-[#be123c] hover:scale-[1.01] cursor-pointer transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-lg"
+        className="w-full py-4 sm:py-6 bg-[#e11d48] text-white text-xl sm:text-2xl font-bold rounded-3xl hover:bg-[#be123c] hover:scale-[1.01] cursor-pointer transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-lg"
       >
         {running ? "✨ Rewriting your pattern…" : "✨ Rewrite My Pattern"}
       </button>
@@ -413,7 +413,7 @@ function AiMode() {
       {/* Output */}
       {(output || running) && (
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
-          <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 sm:px-8 py-5 border-b-2 border-dashed border-gray-200">
             <div className="flex items-center gap-3">
               <h2 className="text-2xl font-bold text-gray-900">Your Rewritten Pattern</h2>
               {running && (
@@ -423,7 +423,7 @@ function AiMode() {
               )}
             </div>
             {output && !running && (
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={async () => { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
                   className="text-lg font-bold text-gray-600 hover:text-[#e11d48] border-2 border-dashed border-gray-300 hover:border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
@@ -573,7 +573,7 @@ function CalcMode() {
       <Divider emoji="🧵" />
 
       {/* Gauge inputs — full width */}
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <GaugeInput
           label="Pattern gauge" sublabel="From your pattern label or first page"
           value={patSts} onChange={setPatSts} unit={patUnit} onUnit={setPatUnit}
@@ -598,10 +598,10 @@ function CalcMode() {
           </div>
         ) : (
           <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
-            <span className={`text-5xl font-bold ${tighter ? "text-[#e11d48]" : "text-emerald-600"}`}>
+            <span className={`text-3xl sm:text-5xl font-bold ${tighter ? "text-[#e11d48]" : "text-emerald-600"}`}>
               {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
             </span>
-            <span className="text-2xl text-gray-500">
+            <span className="text-sm sm:text-2xl text-gray-500">
               {tighter ? "— you'll use more stitches per row to get the same size." : "— you'll use fewer stitches per row to get the same size."}
             </span>
           </div>
@@ -621,7 +621,7 @@ function CalcMode() {
         {showRows && (
           <div className="px-7 pb-7 bg-white border-t-2 border-dashed border-gray-200">
             <p className="text-base text-gray-400 mt-5 mb-5">Row gauge affects how much yarn you need but most yarn labels don&apos;t show it. Only fill this in if you&apos;ve actually measured rows on a swatch.</p>
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {[
                 { label: "Pattern rows", val: patRows, set: setPatRows, unit: patRowUnit, setUnit: setPatRowUnit },
                 { label: "Your rows", val: yourRows, set: setYourRows, unit: yourRowUnit, setUnit: setYourRowUnit },
@@ -652,12 +652,12 @@ function CalcMode() {
       <Divider emoji="🧶" />
 
       {/* Flex: yardage card (left) + BUY panel (right) */}
-      <div className="flex gap-8 items-stretch">
+      <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-stretch">
         <div className="flex-1 min-w-0">
         {/* Yardage */}
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
           <div className="flex items-start justify-between mb-1">
-            <h2 className="text-3xl font-bold text-gray-900">How much yarn should you buy?</h2>
+            <h2 className="text-xl sm:text-3xl font-bold text-gray-900">How much yarn should you buy?</h2>
             <div className="flex bg-gray-100 rounded-xl p-1 gap-1 shrink-0 ml-4 mt-1">
               {(["yds", "m"] as const).map((u) => (
                 <button key={u} onClick={() => setYardUnit(u)}
@@ -668,7 +668,7 @@ function CalcMode() {
             </div>
           </div>
           <p className="text-lg text-gray-400 mb-7">Enter the {yardUnit === "m" ? "meterage" : "yardage"} from your pattern and the size of your yarn skeins.</p>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="text-xl font-bold text-gray-700 flex items-center mb-3">
                 Pattern needs
@@ -726,7 +726,7 @@ function CalcMode() {
 
         {/* BUY panel — right side of flex, same height as yardage card */}
         {skeinsNeeded !== null && (
-          <div className="w-72 shrink-0">
+          <div className="w-full sm:w-72 shrink-0">
             <div className="bg-emerald-500 text-white rounded-3xl p-8 text-center hover:scale-[1.02] cursor-pointer transition-all duration-300 h-full flex flex-col items-center justify-center">
               <p className="text-base font-semibold opacity-70 uppercase tracking-widest mb-1">Buy</p>
               <div className="text-9xl font-bold leading-none">{skeinsNeeded}</div>
@@ -785,9 +785,9 @@ function CalcMode() {
         <>
           <Divider emoji="📋" />
           <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
-            <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 sm:px-8 py-5 border-b-2 border-dashed border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">Your Gauge Report</h2>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={async () => { await navigator.clipboard.writeText(calcReport); setCalcCopied(true); setTimeout(() => setCalcCopied(false), 2000); }}
                   className="text-lg font-bold text-gray-600 hover:text-[#e11d48] border-2 border-dashed border-gray-300 hover:border-[#e11d48] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
@@ -928,7 +928,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
 
   return (
     <div className="min-h-screen" style={{ background: "#f7f3ee" }}>
-      <header className="bg-white border-b-2 border-dashed border-[#e11d48]/20 px-8 py-4 flex items-center justify-between">
+      <header className="bg-white border-b-2 border-dashed border-[#e11d48]/20 px-4 sm:px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/" className="text-xl font-bold text-gray-900 hover:text-[#e11d48] transition-colors">CraftersKit</Link>
           <span className="text-[#e11d48]/30 text-xl font-bold">- - -</span>
@@ -942,12 +942,12 @@ export default function GaugeCalculator({ username }: { username: string }) {
         )}
       </header>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
 
         {/* Page title */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-gray-900 mb-3">Gauge Calculator</h1>
-          <p className="text-xl text-gray-500">Using a different yarn than your pattern? We&apos;ll help rewrite the plan with your specifications!</p>
+          <h1 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-3">Gauge Calculator</h1>
+          <p className="text-base sm:text-xl text-gray-500">Using a different yarn than your pattern? We&apos;ll help rewrite the plan with your specifications!</p>
         </div>
 
         {/* ── TOGGLE ── */}
@@ -955,7 +955,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
           <div className="inline-flex bg-white border-2 border-dashed border-gray-200 rounded-2xl p-1.5 gap-1">
             <button
               onClick={() => setMode("ai")}
-              className={`px-10 py-4 rounded-xl text-2xl font-bold transition-all duration-200 ${
+              className={`px-5 sm:px-10 py-3 sm:py-4 rounded-xl text-lg sm:text-2xl font-bold transition-all duration-200 ${
                 mode === "ai"
                   ? "bg-[#e11d48] text-white shadow-md"
                   : "text-gray-400 hover:text-gray-700"
@@ -965,7 +965,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
             </button>
             <button
               onClick={() => setMode("calc")}
-              className={`px-10 py-4 rounded-xl text-2xl font-bold transition-all duration-200 ${
+              className={`px-5 sm:px-10 py-3 sm:py-4 rounded-xl text-lg sm:text-2xl font-bold transition-all duration-200 ${
                 mode === "calc"
                   ? "bg-[#e11d48] text-white shadow-md"
                   : "text-gray-400 hover:text-gray-700"
