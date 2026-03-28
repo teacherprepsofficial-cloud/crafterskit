@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@/lib/auth";
+import { getRavelryToken } from "@/lib/ravelry-token";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
 
@@ -95,24 +96,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No query provided" }, { status: 400 });
     }
 
-    const basicAuth = `Basic ${Buffer.from(`${process.env.RAVELRY_CLIENT_ID}:${process.env.RAVELRY_CLIENT_SECRET}`).toString("base64")}`;
     const session = await auth();
     const userToken = (session as any)?.accessToken as string | undefined;
 
-    async function ravelrySearch(p: Record<string, string>, authHeader: string) {
+    async function ravelrySearch(p: Record<string, string>, token: string) {
       return fetch(
         `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
-        { headers: { Authorization: authHeader } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
     }
 
     const interpretedAs = searchParams.interpreted_as ?? null;
     const { interpreted_as: _drop, ...ravelryParams } = searchParams;
 
-    // Try user bearer token first; fall back to app basic auth if expired/missing
-    let ravelryRes = await ravelrySearch(ravelryParams, userToken ? `Bearer ${userToken}` : basicAuth);
+    // Try user bearer token first; fall back to app refresh token if expired/missing
+    let activeToken = userToken ?? await getRavelryToken();
+    let ravelryRes = await ravelrySearch(ravelryParams, activeToken);
     if (!ravelryRes.ok && userToken) {
-      ravelryRes = await ravelrySearch(ravelryParams, basicAuth);
+      activeToken = await getRavelryToken();
+      ravelryRes = await ravelrySearch(ravelryParams, activeToken);
     }
 
     if (!ravelryRes.ok) {
@@ -124,7 +126,7 @@ export async function POST(req: NextRequest) {
     // If image search returned too few results, retry with just query + sort
     if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
       const fallback = { query: ravelryParams.query, sort: "popularity" };
-      const retryRes = await ravelrySearch(fallback, basicAuth);
+      const retryRes = await ravelrySearch(fallback, activeToken);
       if (retryRes.ok) {
         const retryData = await retryRes.json();
         if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
