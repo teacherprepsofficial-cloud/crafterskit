@@ -75,11 +75,11 @@ function GaugeInput({
           onChange={(e) => onChange(e.target.value)}
           onWheel={(e) => e.currentTarget.blur()}
           onKeyDown={blockLetters}
-          className={`w-full sm:w-40 text-4xl sm:text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#e11d48]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
+          className={`w-full sm:w-40 text-4xl sm:text-5xl font-bold text-gray-900 border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#e11d48]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
         />
-        <span className="text-xl text-gray-400 font-medium leading-tight">
-          stitches<br />
-          <span className="text-base">{unit === "4inch" ? "per 4 inches" : "per inch"}</span>
+        <span className="text-base text-gray-400 font-medium leading-tight whitespace-nowrap">
+          sts<br />
+          <span>{unit === "4inch" ? "/ 4 in" : "/ inch"}</span>
         </span>
       </div>
     </div>
@@ -642,7 +642,7 @@ function CalcMode() {
                   <div className="flex items-center gap-3">
                     <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val}
                       onChange={(e) => set(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                      className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+                      className="w-full sm:w-32 text-3xl font-bold text-gray-900 border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
                     <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
                   </div>
                 </div>
@@ -680,7 +680,7 @@ function CalcMode() {
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 600" : "e.g. 660"} value={origYards}
                   onChange={(e) => setOrigYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
+                  className="w-full sm:w-44 text-4xl font-bold text-gray-900 border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
             </div>
@@ -692,7 +692,7 @@ function CalcMode() {
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder={yardUnit === "m" ? "e.g. 200" : "e.g. 220"} value={skeinsYards}
                   onChange={(e) => setSkeinsYards(e.target.value)} onWheel={(e) => e.currentTarget.blur()} onKeyDown={blockLetters}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
+                  className="w-full sm:w-44 text-4xl font-bold text-gray-900 border-2 border-dashed border-gray-300 hover:border-[#e11d48]/50 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl" />
                 <span className="text-xl text-gray-400 font-medium">{yardUnit === "m" ? "meters" : "yards"}</span>
               </div>
             </div>
@@ -746,12 +746,13 @@ function CalcMode() {
         )}
       </div>
 
-      <Divider emoji="📐" />
+      <Divider emoji="📏" />
 
       {/* Stitch converter — multi-count */}
       <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center">
-          Convert stitch counts from your pattern
+          <span className="hidden sm:inline">Convert stitch counts from your pattern</span>
+          <span className="sm:hidden">Convert stitch counts</span>
           <InfoTip text="Enter any stitch counts from your pattern — separated by commas. For example: 120, 84, 60. We'll show you what each becomes with your yarn." />
         </h2>
         <p className="text-lg text-gray-400 mb-6">Enter the numbers from your pattern, separated by commas — we&apos;ll convert all of them at once.</p>
@@ -812,9 +813,10 @@ function CalcMode() {
               </div>
             </div>
             {calcErr && <p className="text-base text-red-500 px-8 pt-4">{calcErr}</p>}
-            <div className="p-8 space-y-6">
+            <div className="p-5 sm:p-8 space-y-6">
               {/* Numbers table */}
-              <table className="w-full border-collapse text-base rounded-xl overflow-hidden">
+              <div className="overflow-x-auto -mx-1">
+              <table className="w-full border-collapse text-base rounded-xl overflow-hidden min-w-[360px]">
                 <thead>
                   <tr>
                     <th className="bg-[#e11d48] text-white px-5 py-3 text-left font-semibold w-1/3" />
@@ -858,6 +860,7 @@ function CalcMode() {
                   )}
                 </tbody>
               </table>
+              </div>
 
               {/* Scale summary */}
               <div className={`rounded-2xl px-6 py-4 border ${perfect ? "bg-emerald-50 border-emerald-100" : tighter ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"}`}>
