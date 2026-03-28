@@ -372,7 +372,7 @@ function AiMode() {
             onChange={(e) => setPatternText(e.target.value)}
             rows={10}
             placeholder={"Paste the instructions here — for example:\n\nCast on 140 sts. Join in the round.\nKnit one round placing markers every 28 sts.\nWork chart repeats as desired.\nBind off all sts."}
-            className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed"
+            className="w-full border-2 border-dashed border-gray-200 hover:border-gray-300 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg font-mono focus:outline-none resize-y transition-all duration-200 leading-relaxed placeholder:text-gray-400"
           />
         ) : pdfLoading ? (
           <div className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-[#e11d48]/30 rounded-2xl bg-[#e11d48]/5">
@@ -396,7 +396,7 @@ function AiMode() {
           onChange={(e) => setSituation(e.target.value)}
           rows={5}
           placeholder={"Examples of what you might write:\n\n\"My yarn does 16 stitches per 4 inches. The pattern calls for 22.\"\n\n\"I'm using a much thicker yarn — Lion Brand Wool-Ease Thick & Quick on size 13 needles. My swatch came out to 12 stitches per 4 inches.\"\n\n\"I want to make the medium size but I knit very loosely so my gauge is always bigger than the pattern.\""}
-          className="w-full border-2 border-dashed border-[#e11d48]/20 hover:border-[#e11d48]/40 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg focus:outline-none resize-y transition-all duration-200 leading-relaxed"
+          className="w-full border-2 border-dashed border-[#e11d48]/20 hover:border-[#e11d48]/40 focus:border-[#e11d48] focus:border-solid focus:ring-4 focus:ring-[#e11d48]/10 rounded-2xl px-5 py-4 text-lg focus:outline-none resize-y transition-all duration-200 leading-relaxed placeholder:text-gray-400"
         />
       </div>
 
