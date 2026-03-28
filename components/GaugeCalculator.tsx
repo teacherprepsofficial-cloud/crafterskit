@@ -407,7 +407,7 @@ function CalcMode() {
       <Divider emoji="🧶" />
 
       {/* Flex: yardage card (left) + BUY panel (right) */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-8 items-stretch">
         <div className="flex-1 min-w-0">
         {/* Yardage */}
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
@@ -479,10 +479,10 @@ function CalcMode() {
         </div>
         </div>
 
-        {/* BUY panel — right side of flex, sticky */}
+        {/* BUY panel — right side of flex, same height as yardage card */}
         {skeinsNeeded !== null && (
-          <div className="w-72 shrink-0 sticky top-6 self-start">
-            <div className="bg-emerald-500 text-white rounded-3xl p-8 text-center hover:scale-[1.02] cursor-pointer transition-all duration-300">
+          <div className="w-72 shrink-0">
+            <div className="bg-emerald-500 text-white rounded-3xl p-8 text-center hover:scale-[1.02] cursor-pointer transition-all duration-300 h-full flex flex-col items-center justify-center">
               <p className="text-base font-semibold opacity-70 uppercase tracking-widest mb-1">Buy</p>
               <div className="text-9xl font-bold leading-none">{skeinsNeeded}</div>
               <div className="text-3xl font-semibold mt-2 opacity-90">{skeinsNeeded === 1 ? "skein" : "skeins"}</div>
