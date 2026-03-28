@@ -365,26 +365,49 @@ function CalcMode() {
 
   return (
     <div className="space-y-6">
-      {/* Flex: gauge inputs (left) + BUY panel (right) */}
-      <div className="flex gap-8 items-start">
-        <div className="flex-1 min-w-0 space-y-6">
-          <Divider emoji="🧵" />
+      <Divider emoji="🧵" />
 
-          <div className="grid grid-cols-2 gap-5">
-            <GaugeInput
-              label="Pattern gauge" sublabel="From your pattern label or first page"
-              value={patSts} onChange={setPatSts} unit={patUnit} onUnit={setPatUnit}
-              tip="Every pattern lists a gauge — usually near the top. Look for something like '20 stitches = 4 inches on US 8 needles'. Enter that first number here."
-            />
-            <GaugeInput
-              label="Your gauge" sublabel="From your yarn label — or your own swatch"
-              value={yourSts} onChange={setYourSts} unit={yourUnit} onUnit={setYourUnit} accent
-              tip="Your yarn's label shows a gauge range like '18–22 sts per 4 inches'. Use the middle number. Or knit a small test square and count your own stitches over 4 inches."
-            />
+      {/* Gauge inputs — full width */}
+      <div className="grid grid-cols-2 gap-5">
+        <GaugeInput
+          label="Pattern gauge" sublabel="From your pattern label or first page"
+          value={patSts} onChange={setPatSts} unit={patUnit} onUnit={setPatUnit}
+          tip="Every pattern lists a gauge — usually near the top. Look for something like '20 stitches = 4 inches on US 8 needles'. Enter that first number here."
+        />
+        <GaugeInput
+          label="Your gauge" sublabel="From your yarn label — or your own swatch"
+          value={yourSts} onChange={setYourSts} unit={yourUnit} onUnit={setYourUnit} accent
+          tip="Your yarn's label shows a gauge range like '18–22 sts per 4 inches'. Use the middle number. Or knit a small test square and count your own stitches over 4 inches."
+        />
+      </div>
+
+      {/* Gauge result — full width, between gauge inputs and yardage */}
+      {hasScale && (
+        perfect ? (
+          <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <span className="text-lg font-bold text-emerald-700">Perfect match!</span>
+              <span className="text-base text-gray-400 ml-2">No adjustments needed.</span>
+            </div>
           </div>
+        ) : (
+          <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
+            <span className={`text-5xl font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
+              {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
+            </span>
+            <span className="text-2xl text-gray-500">
+              {tighter ? "— you'll need more yarn than the pattern." : "— you'll need less yarn than the pattern."}
+            </span>
+          </div>
+        )
+      )}
 
-          <Divider emoji="🧶" />
+      <Divider emoji="🧶" />
 
+      {/* Flex: yardage card (left) + BUY panel (right) */}
+      <div className="flex gap-8 items-start">
+        <div className="flex-1 min-w-0">
         {/* Yardage */}
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-8 hover:border-gray-300 hover:shadow-md transition-all duration-200">
           <div className="flex items-start justify-between mb-1">
@@ -473,28 +496,6 @@ function CalcMode() {
           </div>
         )}
       </div>
-
-      {/* Gauge result — full width below gauge + yardage */}
-      {hasScale && (
-        perfect ? (
-          <div className="bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl px-6 py-4 flex items-center gap-3">
-            <span className="text-2xl">🎉</span>
-            <div>
-              <span className="text-lg font-bold text-emerald-700">Perfect match!</span>
-              <span className="text-base text-gray-400 ml-2">No adjustments needed.</span>
-            </div>
-          </div>
-        ) : (
-          <div className={`border-2 border-dashed rounded-2xl px-6 py-5 flex items-center gap-4 ${tighter ? "bg-rose-50 border-rose-200" : "bg-emerald-50 border-emerald-200"}`}>
-            <span className={`text-5xl font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
-              {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
-            </span>
-            <span className="text-2xl text-gray-500">
-              {tighter ? "— you'll need more yarn than the pattern." : "— you'll need less yarn than the pattern."}
-            </span>
-          </div>
-        )
-      )}
 
       {/* Row gauge — full width */}
       <div className="border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-gray-300 transition-all duration-200">
