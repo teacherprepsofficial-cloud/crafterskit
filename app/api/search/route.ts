@@ -95,13 +95,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No query provided" }, { status: 400 });
     }
 
+    const basicAuth = `Basic ${Buffer.from(`${process.env.RAVELRY_CLIENT_ID}:${process.env.RAVELRY_CLIENT_SECRET}`).toString("base64")}`;
     const session = await auth();
     const userToken = (session as any)?.accessToken as string | undefined;
-    const authHeader = userToken
-      ? `Bearer ${userToken}`
-      : `Basic ${Buffer.from(`${process.env.RAVELRY_CLIENT_ID}:${process.env.RAVELRY_CLIENT_SECRET}`).toString("base64")}`;
 
-    async function ravelrySearch(p: Record<string, string>) {
+    async function ravelrySearch(p: Record<string, string>, authHeader: string) {
       return fetch(
         `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
         { headers: { Authorization: authHeader } }
@@ -111,7 +109,11 @@ export async function POST(req: NextRequest) {
     const interpretedAs = searchParams.interpreted_as ?? null;
     const { interpreted_as: _drop, ...ravelryParams } = searchParams;
 
-    let ravelryRes = await ravelrySearch(ravelryParams);
+    // Try user bearer token first; fall back to app basic auth if expired/missing
+    let ravelryRes = await ravelrySearch(ravelryParams, userToken ? `Bearer ${userToken}` : basicAuth);
+    if (!ravelryRes.ok && userToken) {
+      ravelryRes = await ravelrySearch(ravelryParams, basicAuth);
+    }
 
     if (!ravelryRes.ok) {
       return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
     // If image search returned too few results, retry with just query + sort
     if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
       const fallback = { query: ravelryParams.query, sort: "popularity" };
-      const retryRes = await ravelrySearch(fallback);
+      const retryRes = await ravelrySearch(fallback, basicAuth);
       if (retryRes.ok) {
         const retryData = await retryRes.json();
         if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
