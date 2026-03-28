@@ -98,7 +98,7 @@ export default function PhotoToPatternPage() {
   function handleDownload() {
     const lines = output.split("\n");
 
-    const sections: Record<string, string[]> = { about: [], canSee: [], gauge: [], sizing: [], instructions: [], notes: [], abbreviations: [] };
+    const sections: Record<string, string[]> = { about: [], canSee: [], gauge: [], sizing: [], instructions: [], notes: [] };
     let current = "about";
     for (const line of lines) {
       if (line.startsWith("## About")) { current = "about"; continue; }
@@ -110,27 +110,59 @@ export default function PhotoToPatternPage() {
       sections[current]?.push(line);
     }
 
-    function md(line: string): string {
-      if (line === "") return "";
-      if (line.startsWith("**") && line.includes(":**")) {
-        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-        if (m) return `<p><strong>${m[1]}:</strong> ${m[2]}</p>`;
+    function inlineBold(s: string): string {
+      return s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    }
+
+    function isTableRow(l: string) { return l.trim().startsWith("|") && l.trim().endsWith("|"); }
+    function isSeparator(l: string) { return /^\|[-| :]+\|$/.test(l.trim()); }
+
+    function processLinesForPdf(arr: string[]): string {
+      const out: string[] = [];
+      let i = 0;
+      while (i < arr.length) {
+        const line = arr[i];
+        if (isTableRow(line)) {
+          const tableLines: string[] = [];
+          while (i < arr.length && isTableRow(arr[i])) { tableLines.push(arr[i]); i++; }
+          const dataRows = tableLines.filter(l => !isSeparator(l));
+          let tbl = '<table class="md-table">';
+          dataRows.forEach((row, ri) => {
+            const cells = row.split("|").slice(1, -1);
+            const tag = ri === 0 ? "th" : "td";
+            tbl += "<tr>" + cells.map(c => `<${tag}>${inlineBold(c.trim())}</${tag}>`).join("") + "</tr>";
+          });
+          tbl += "</table>";
+          out.push(tbl);
+        } else if (line === "") {
+          out.push("");
+          i++;
+        } else if (line.startsWith("- ")) {
+          out.push(`<li>${inlineBold(line.slice(2))}</li>`);
+          i++;
+        } else if (/^\*\*/.test(line)) {
+          const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+          if (m) {
+            const isInstr = /^(Row|Round|Rnd|Section|Setup|Abbreviations|Cast|Bind|Finishing|Thumb|Cuff|Hand|Body|Sleeve|Neck|Hem|Rib)/.test(m[1]);
+            out.push(`<p class="${isInstr ? "instr-head" : ""}"><strong>${m[1]}:</strong> ${inlineBold(m[2])}</p>`);
+          } else {
+            out.push(`<p>${inlineBold(line)}</p>`);
+          }
+          i++;
+        } else {
+          out.push(`<p>${inlineBold(line)}</p>`);
+          i++;
+        }
       }
-      if (/^\*\*(Row|Round|Rnd|Round|Section|Setup|Abbreviations|Cast|Bind|Finishing)/.test(line)) {
-        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-        if (m) return `<p class="instr-head"><strong>${m[1]}:</strong> ${m[2]}</p>`;
-      }
-      if (line.startsWith("- ")) return `<li>${line.slice(2)}</li>`;
-      if (line.startsWith("# ")) return `<h3>${line.slice(2)}</h3>`;
-      return `<p>${line}</p>`;
+      return out.join("\n");
     }
 
     const aboutText = sections.about.filter(Boolean).join(" ");
-    const canSeeHtml = sections.canSee.filter(Boolean).map(md).join("\n");
-    const gaugeHtml = sections.gauge.filter(Boolean).map(md).join("\n");
-    const sizingHtml = sections.sizing.filter(Boolean).map(md).join("\n");
-    const instrHtml = sections.instructions.filter(l => l !== "").map(md).join("\n");
-    const notesHtml = sections.notes.filter(Boolean).map(l => `<p>${l}</p>`).join("\n");
+    const canSeeHtml = processLinesForPdf(sections.canSee);
+    const gaugeHtml = processLinesForPdf(sections.gauge);
+    const sizingHtml = processLinesForPdf(sections.sizing);
+    const instrHtml = processLinesForPdf(sections.instructions);
+    const notesHtml = sections.notes.filter(Boolean).map(l => `<p>${inlineBold(l)}</p>`).join("\n");
 
     const imgTag = preview ? `<img src="${preview}" style="max-height:200px;max-width:200px;border-radius:8px;border:1px solid #e5e5e5;object-fit:contain;" alt="Garment" />` : "";
 
@@ -166,6 +198,10 @@ export default function PhotoToPatternPage() {
   .notes h2 { font-style: normal; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; margin-bottom: 6px; }
   .disclaimer { background: #fffbf0; border: 1px solid #fde68a; border-radius: 5px; padding: 8px 12px; margin-top: 12px; font-size: 8.5pt; color: #78350f; font-style: italic; }
   .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e5e5; font-size: 7.5pt; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
+  .md-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 4px 0; }
+  .md-table th { background: #be123c; color: #fff; font-family: Arial, sans-serif; font-size: 9pt; font-weight: 700; text-align: left; padding: 5px 8px; }
+  .md-table td { padding: 4px 8px; border-bottom: 1px solid #f0d0d0; vertical-align: top; }
+  .md-table tr:nth-child(even) td { background: #fdf8f8; }
 </style>
 </head>
 <body>
@@ -206,17 +242,58 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
     setTimeout(() => { win.print(); }, 500);
   }
 
+  function applyInlineBold(text: string, baseClass = "text-gray-800") {
+    const parts = text.split(/\*\*([^*]+)\*\*/g);
+    return parts.map((part, i) =>
+      i % 2 === 1 ? <strong key={i} className="font-semibold text-gray-900">{part}</strong> : <span key={i} className={baseClass}>{part}</span>
+    );
+  }
+
   function renderOutput(text: string) {
-    return text.split("\n").map((line, i) => {
-      if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-bold text-gray-900 mt-6 mb-2">{line.slice(3)}</h2>;
-      if (/^\*\*[^*]+\*\*:?\s/.test(line)) {
-        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-        if (m) return <p key={i} className="mt-1"><span className="font-semibold text-gray-900">{m[1]}:</span> <span className="text-gray-800">{m[2]}</span></p>;
+    const lines = text.split("\n");
+    const elements: React.ReactNode[] = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      // Markdown table
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const tableLines: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+          tableLines.push(lines[i]); i++;
+        }
+        const dataRows = tableLines.filter(l => !/^\|[-| :]+\|$/.test(l.trim()));
+        elements.push(
+          <div key={i} className="overflow-x-auto my-3">
+            <table className="w-full text-sm border-collapse">
+              <tbody>
+                {dataRows.map((row, ri) => {
+                  const cells = row.split("|").slice(1, -1);
+                  return (
+                    <tr key={ri} className={ri === 0 ? "bg-[#be123c] text-white" : ri % 2 === 0 ? "bg-white" : "bg-rose-50"}>
+                      {cells.map((cell, ci) => ri === 0
+                        ? <th key={ci} className="text-left px-3 py-1.5 font-semibold text-xs uppercase tracking-wide">{cell.trim()}</th>
+                        : <td key={ci} className="px-3 py-1.5 border-b border-rose-100">{applyInlineBold(cell.trim())}</td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+        continue;
       }
-      if (line.startsWith("- ")) return <li key={i} className="ml-4 text-gray-800 list-disc">{line.slice(2)}</li>;
-      if (line === "") return <div key={i} className="h-2" />;
-      return <p key={i} className="text-gray-800">{line}</p>;
-    });
+      if (line.startsWith("## ")) { elements.push(<h2 key={i} className="text-xl font-bold text-gray-900 mt-6 mb-2">{line.slice(3)}</h2>); i++; continue; }
+      if (/^\*\*/.test(line)) {
+        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+        if (m) { elements.push(<p key={i} className="mt-1"><span className="font-semibold text-gray-900">{m[1]}:</span> <span className="text-gray-800"> {applyInlineBold(m[2])}</span></p>); i++; continue; }
+      }
+      if (line.startsWith("- ")) { elements.push(<li key={i} className="ml-4 text-gray-800 list-disc">{applyInlineBold(line.slice(2))}</li>); i++; continue; }
+      if (line === "") { elements.push(<div key={i} className="h-2" />); i++; continue; }
+      elements.push(<p key={i} className="text-gray-800">{applyInlineBold(line)}</p>);
+      i++;
+    }
+    return elements;
   }
 
   return (
