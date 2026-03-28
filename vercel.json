@@ -1,7 +1,7 @@
 {
   "functions": {
     "app/api/search/route.ts": { "maxDuration": 30 },
-    "app/api/gauge-ai/route.ts": { "maxDuration": 30 },
+    "app/api/gauge-ai/route.ts": { "maxDuration": 60 },
     "app/api/gauge-convert/route.ts": { "maxDuration": 30 }
   }
 }
