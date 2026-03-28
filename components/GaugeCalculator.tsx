@@ -152,126 +152,94 @@ function AiMode() {
   const [downloaded, setDownloaded] = useState(false);
   const [err, setErr] = useState("");
 
-  async function downloadPdf() {
-    const { jsPDF } = await import("jspdf");
-    const doc = new jsPDF({ unit: "pt", format: "letter" });
+  function downloadPdf() {
+    // Parse markdown → HTML
+    const inline = (s: string) =>
+      s.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+       .replace(/\*(.*?)\*/g, "<em>$1</em>")
+       .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}]/gu, "");
 
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 56;
-    const contentW = pageW - margin * 2;
-    const brand = "#9b2335";
-    const headerH = 48;
-    const topY = headerH + 20;
-    const bottomY = pageH - 36;
+    const lines = output.split("\n");
+    let body = "";
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      const t = line.trim();
 
-    function drawHeader() {
-      doc.setFillColor(brand);
-      doc.rect(0, 0, pageW, headerH, "F");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.setTextColor("#ffffff");
-      doc.text("CraftersKit.com", margin, 30);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text("Your Adapted Pattern", pageW - margin, 30, { align: "right" });
-    }
-
-    // Parse lines into typed segments
-    type Seg = { type: "h1"|"h2"|"h3"|"body"|"quote"|"bullet"|"divider"|"blank"; text: string };
-    const segs: Seg[] = [];
-    for (const raw of output.split("\n")) {
-      const line = raw.trim();
-      // Strip emoji (anything outside basic Latin + Latin Extended)
-      const stripEmoji = (s: string) => s.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}]/gu, "").trim();
-      const clean = (s: string) => stripEmoji(s.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1"));
-      if (/^-{3,}$/.test(line) || /^\*{3,}$/.test(line)) segs.push({ type: "divider", text: "" });
-      else if (line.startsWith("### ")) segs.push({ type: "h3", text: clean(line.slice(4)) });
-      else if (line.startsWith("## "))  segs.push({ type: "h2", text: clean(line.slice(3)) });
-      else if (line.startsWith("# "))   segs.push({ type: "h1", text: clean(line.slice(2)) });
-      else if (line.startsWith("> "))   segs.push({ type: "quote",  text: clean(line.slice(2)) });
-      else if (/^[-•] /.test(line))     segs.push({ type: "bullet", text: clean(line.slice(2)) });
-      else if (line.trim() === "")      segs.push({ type: "blank",  text: "" });
-      else                              segs.push({ type: "body",   text: clean(line) });
-    }
-
-    // Single-pass render — headers added per page, footers stamped after
-    drawHeader();
-    let y = topY;
-    let prevBlank = false;
-
-    for (const seg of segs) {
-      // Collapse consecutive blanks into a small gap
-      if (seg.type === "blank") {
-        if (!prevBlank) y += 10;
-        prevBlank = true;
-        continue;
-      }
-      prevBlank = false;
-
-      if (seg.type === "divider") {
-        if (y + 16 > bottomY) { doc.addPage(); drawHeader(); y = topY; }
-        doc.setDrawColor("#dddddd");
-        doc.setLineWidth(0.75);
-        doc.line(margin, y + 4, pageW - margin, y + 4);
-        y += 18;
+      // Markdown table block
+      if (t.startsWith("|")) {
+        const tableLines: string[] = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) {
+          tableLines.push(lines[i].trim());
+          i++;
+        }
+        const rows = tableLines.filter(l => !/^\|[\s:\-|]+\|$/.test(l));
+        body += `<table><tbody>`;
+        rows.forEach((row, ri) => {
+          const cells = row.split("|").slice(1, -1);
+          const tag = ri === 0 ? "th" : "td";
+          body += `<tr>${cells.map(c => `<${tag}>${inline(c.trim())}</${tag}>`).join("")}</tr>`;
+        });
+        body += `</tbody></table>`;
         continue;
       }
 
-      // Font settings per type
-      const cfg: Record<Seg["type"], { size: number; bold: boolean; color: string; indent: number }> = {
-        h1:     { size: 18, bold: true,  color: brand,     indent: 0  },
-        h2:     { size: 15, bold: true,  color: "#222222", indent: 0  },
-        h3:     { size: 13, bold: true,  color: "#444444", indent: 0  },
-        body:   { size: 11, bold: false, color: "#222222", indent: 0  },
-        quote:  { size: 11, bold: false, color: "#555555", indent: 18 },
-        bullet: { size: 11, bold: false, color: "#222222", indent: 20 },
-        divider:{ size: 11, bold: false, color: "#222222", indent: 0  },
-        blank:  { size: 11, bold: false, color: "#222222", indent: 0  },
-      };
-      const { size, bold, color, indent } = cfg[seg.type];
-      doc.setFontSize(size);
-      doc.setFont("helvetica", bold ? "bold" : "normal");
-      doc.setTextColor(color);
-
-      const wrapped = doc.splitTextToSize(seg.text || " ", contentW - indent);
-      const lineH = size * 1.5;
-      const extraTop = seg.type === "h1" ? 10 : seg.type === "h2" ? 6 : seg.type === "h3" ? 4 : 2;
-      const blockH = wrapped.length * lineH + extraTop + 4;
-
-      if (y + blockH > bottomY) { doc.addPage(); drawHeader(); y = topY; }
-
-      y += extraTop;
-
-      // Quote: subtle background + left accent bar
-      if (seg.type === "quote") {
-        doc.setFillColor("#f7f3ee");
-        doc.rect(margin, y - size + 2, contentW, blockH - extraTop, "F");
-        doc.setFillColor(brand);
-        doc.rect(margin, y - size + 2, 3, blockH - extraTop, "F");
-      }
-
-      // Bullet: dot
-      if (seg.type === "bullet") {
-        doc.setFillColor(brand);
-        doc.circle(margin + 5, y - 2, 2.5, "F");
-      }
-
-      doc.text(wrapped, margin + indent, y);
-      y += wrapped.length * lineH + 4;
+      if (/^#{1} /.test(t))       body += `<h1>${inline(t.slice(2))}</h1>`;
+      else if (/^## /.test(t))    body += `<h2>${inline(t.slice(3))}</h2>`;
+      else if (/^### /.test(t))   body += `<h3>${inline(t.slice(4))}</h3>`;
+      else if (/^-{3,}$/.test(t)) body += `<hr>`;
+      else if (/^> /.test(t))     body += `<blockquote>${inline(t.slice(2))}</blockquote>`;
+      else if (/^[-•\d]+[\.\)]\s/.test(t)) body += `<li>${inline(t.replace(/^[-•\d]+[\.\)]\s/, ""))}</li>`;
+      else if (t === "")          body += `<div class="gap"></div>`;
+      else                        body += `<p>${inline(t)}</p>`;
+      i++;
     }
 
-    // Stamp footers on all pages now that we know total
-    const total = doc.getNumberOfPages();
-    for (let p = 1; p <= total; p++) {
-      doc.setPage(p);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor("#aaaaaa");
-      doc.text(`© CraftersKit.com  •  crafterskit.com  •  Page ${p} of ${total}`, pageW / 2, pageH - 14, { align: "center" });
-    }
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Your Adapted Pattern — CraftersKit.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',Georgia,sans-serif;font-size:11pt;color:#222;background:#fff;line-height:1.65}
+  .header{background:#9b2335;color:#fff;padding:13px 48px;display:flex;justify-content:space-between;align-items:center}
+  .header .brand{font-weight:700;font-size:15pt;letter-spacing:-0.3px}
+  .header .sub{font-size:10pt;opacity:.88}
+  .wrap{max-width:680px;margin:0 auto;padding:36px 48px 60px}
+  h1{font-family:'Playfair Display',Georgia,serif;font-size:22pt;color:#9b2335;font-weight:700;margin:28px 0 6px;line-height:1.25}
+  h2{font-family:'Inter',sans-serif;font-size:13pt;color:#111;font-weight:600;margin:26px 0 8px;padding-bottom:5px;border-bottom:1.5px solid #ebebeb}
+  h3{font-family:'Inter',sans-serif;font-size:11.5pt;color:#333;font-weight:600;margin:18px 0 5px}
+  p{margin:6px 0 10px}
+  .gap{height:8px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:10.5pt}
+  th{background:#9b2335;color:#fff;padding:8px 14px;text-align:left;font-weight:600;font-size:10pt}
+  td{padding:7px 14px;border-bottom:1px solid #eee}
+  tr:nth-child(even) td{background:#faf7f5}
+  td:first-child{color:#9b2335;font-weight:500}
+  blockquote{background:#faf7f5;border-left:3px solid #9b2335;padding:9px 16px;margin:10px 0;color:#555;font-style:italic;font-size:10.5pt}
+  li{margin:3px 0 3px 22px;list-style:disc}
+  hr{border:none;border-top:1px solid #e5e5e5;margin:18px 0}
+  strong{color:#111;font-weight:600}
+  .footer{text-align:center;color:#bbb;font-size:8.5pt;margin-top:48px;padding-top:14px;border-top:1px solid #eee}
+  @media print{
+    .header{print-color-adjust:exact;-webkit-print-color-adjust:exact;position:fixed;top:0;left:0;right:0}
+    .wrap{padding-top:74px}
+    table{print-color-adjust:exact;-webkit-print-color-adjust:exact;page-break-inside:avoid}
+    th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    h1,h2{page-break-after:avoid}
+    .footer{position:fixed;bottom:0;left:0;right:0;background:#fff;padding:8px}
+    @page{margin:.5in .65in .65in}
+  }
+</style></head><body>
+<div class="header"><span class="brand">CraftersKit.com</span><span class="sub">Your Adapted Pattern</span></div>
+<div class="wrap">${body}
+<div class="footer">© CraftersKit.com &nbsp;•&nbsp; crafterskit.com &nbsp;•&nbsp; Made with love for a fellow maker</div>
+</div>
+<script>window.onload=function(){window.print()}</script>
+</body></html>`;
 
-    doc.save("my-adapted-pattern-crafterskit.pdf");
+    const win = window.open("", "_blank");
+    if (win) { win.document.write(html); win.document.close(); }
+    else { setErr("Please allow pop-ups for this site to download your pattern."); }
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 2000);
   }
