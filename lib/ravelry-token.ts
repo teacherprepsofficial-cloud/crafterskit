@@ -4,35 +4,51 @@ const RAVELRY_BASIC = Buffer.from(
 
 const VERCEL_PROJECT_ID = "prj_hxufgCF8AfuUCFZHGix2k7vbEFKb";
 const VERCEL_TEAM_ID = "team_fN6AALxI16rGIOe7IBu36sTc";
-const VERCEL_ENV_ID = "GQ5nFZtQ9aQorrYI"; // RAVELRY_REFRESH_TOKEN env var ID
+const VERCEL_ENV_ID = "GQ5nFZtQ9aQorrYI";
 
 let cached: { token: string; expiresAt: number } | null = null;
 
-async function persistRefreshToken(newRefreshToken: string) {
+async function getStoredRefreshToken(): Promise<string> {
   const vercelToken = process.env.VERCEL_TOKEN?.trim();
-  if (!vercelToken || !newRefreshToken) return;
+  if (vercelToken) {
+    try {
+      const res = await fetch(
+        `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/env/${VERCEL_ENV_ID}?teamId=${VERCEL_TEAM_ID}`,
+        { headers: { Authorization: `Bearer ${vercelToken}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.value) return data.value;
+      }
+    } catch { /* fall through */ }
+  }
+  // Fallback to baked-in env var
+  const fallback = process.env.RAVELRY_REFRESH_TOKEN?.trim();
+  if (!fallback) throw new Error("RAVELRY_REFRESH_TOKEN not set");
+  return fallback;
+}
+
+async function saveRefreshToken(newToken: string): Promise<void> {
+  const vercelToken = process.env.VERCEL_TOKEN?.trim();
+  if (!vercelToken) return;
   try {
     await fetch(
       `https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/env/${VERCEL_ENV_ID}?teamId=${VERCEL_TEAM_ID}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${vercelToken}` },
-        body: JSON.stringify({ value: newRefreshToken }),
+        body: JSON.stringify({ value: newToken }),
       }
     );
-  } catch {
-    // Non-fatal — token will still work for this warm instance
-  }
+  } catch { /* non-fatal */ }
 }
 
 export async function getRavelryToken(): Promise<string> {
-  // Return cached token if still valid (with 60s buffer)
   if (cached && Date.now() < cached.expiresAt - 60_000) {
     return cached.token;
   }
 
-  const refreshToken = process.env.RAVELRY_REFRESH_TOKEN?.trim();
-  if (!refreshToken) throw new Error("RAVELRY_REFRESH_TOKEN not set");
+  const refreshToken = await getStoredRefreshToken();
 
   const res = await fetch("https://www.ravelry.com/oauth2/token", {
     method: "POST",
@@ -52,9 +68,9 @@ export async function getRavelryToken(): Promise<string> {
     expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
   };
 
-  // Ravelry rotates refresh tokens — persist the new one immediately
-  if (data.refresh_token && data.refresh_token !== refreshToken) {
-    persistRefreshToken(data.refresh_token);
+  // Save rotated refresh token immediately so next cold start gets it
+  if (data.refresh_token) {
+    saveRefreshToken(data.refresh_token);
   }
 
   return cached.token;
