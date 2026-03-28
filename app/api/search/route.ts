@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { getRavelryToken } from "@/lib/ravelry-token";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
-
-const RAVELRY_BASIC = Buffer.from(
-  `${process.env.RAVELRY_CLIENT_ID!.trim()}:${process.env.RAVELRY_CLIENT_SECRET!.trim()}`
-).toString("base64");
 
 const SYSTEM_PROMPT = `You are a Ravelry pattern search assistant. Convert natural language queries into Ravelry API search parameters.
 
@@ -98,10 +95,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No query provided" }, { status: 400 });
     }
 
+    const token = await getRavelryToken();
     async function ravelrySearch(p: Record<string, string>) {
       return fetch(
         `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
-        { headers: { Authorization: `Basic ${RAVELRY_BASIC}` } }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
     }
 
