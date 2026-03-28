@@ -139,63 +139,46 @@ function PdfDropZone({ pdfName, onFile }: {
   );
 }
 
-// ─── AI MODE ──────────────────────────────────────────────────────────────────
-function AiMode() {
-  const [patternText, setPatternText] = useState("");
-  const [pdfName, setPdfName] = useState("");
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [inputMode, setInputMode] = useState<"paste" | "pdf">("paste");
-  const [situation, setSituation] = useState("");
-  const [output, setOutput] = useState("");
-  const [running, setRunning] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-  const [err, setErr] = useState("");
+// ─── SHARED PDF BUILDER ───────────────────────────────────────────────────────
+function buildPdfHtml(content: string): string {
+  const inline = (s: string) =>
+    s.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+     .replace(/\*(.*?)\*/g, "<em>$1</em>")
+     .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}]/gu, "");
 
-  function downloadPdf() {
-    // Parse markdown → HTML
-    const inline = (s: string) =>
-      s.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-       .replace(/\*(.*?)\*/g, "<em>$1</em>")
-       .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}]/gu, "");
-
-    const lines = output.split("\n");
-    let body = "";
-    let i = 0;
-    while (i < lines.length) {
-      const line = lines[i];
-      const t = line.trim();
-
-      // Markdown table block
-      if (t.startsWith("|")) {
-        const tableLines: string[] = [];
-        while (i < lines.length && lines[i].trim().startsWith("|")) {
-          tableLines.push(lines[i].trim());
-          i++;
-        }
-        const rows = tableLines.filter(l => !/^\|[\s:\-|]+\|$/.test(l));
-        body += `<table><tbody>`;
-        rows.forEach((row, ri) => {
-          const cells = row.split("|").slice(1, -1);
-          const tag = ri === 0 ? "th" : "td";
-          body += `<tr>${cells.map(c => `<${tag}>${inline(c.trim())}</${tag}>`).join("")}</tr>`;
-        });
-        body += `</tbody></table>`;
-        continue;
+  const lines = content.split("\n");
+  let body = "";
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const t = line.trim();
+    if (t.startsWith("|")) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) {
+        tableLines.push(lines[i].trim());
+        i++;
       }
-
-      if (/^#{1} /.test(t))       body += `<h1>${inline(t.slice(2))}</h1>`;
-      else if (/^## /.test(t))    body += `<h2>${inline(t.slice(3))}</h2>`;
-      else if (/^### /.test(t))   body += `<h3>${inline(t.slice(4))}</h3>`;
-      else if (/^-{3,}$/.test(t)) body += `<hr>`;
-      else if (/^> /.test(t))     body += `<blockquote>${inline(t.slice(2))}</blockquote>`;
-      else if (/^[-•\d]+[\.\)]\s/.test(t)) body += `<li>${inline(t.replace(/^[-•\d]+[\.\)]\s/, ""))}</li>`;
-      else if (t === "")          body += `<div class="gap"></div>`;
-      else                        body += `<p>${inline(t)}</p>`;
-      i++;
+      const rows = tableLines.filter(l => !/^\|[\s:\-|]+\|$/.test(l));
+      body += `<table><tbody>`;
+      rows.forEach((row, ri) => {
+        const cells = row.split("|").slice(1, -1);
+        const tag = ri === 0 ? "th" : "td";
+        body += `<tr>${cells.map(c => `<${tag}>${inline(c.trim())}</${tag}>`).join("")}</tr>`;
+      });
+      body += `</tbody></table>`;
+      continue;
     }
-
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    if (/^# /.test(t))          body += `<h1>${inline(t.slice(2))}</h1>`;
+    else if (/^## /.test(t))    body += `<h2>${inline(t.slice(3))}</h2>`;
+    else if (/^### /.test(t))   body += `<h3>${inline(t.slice(4))}</h3>`;
+    else if (/^-{3,}$/.test(t)) body += `<hr>`;
+    else if (/^> /.test(t))     body += `<blockquote>${inline(t.slice(2))}</blockquote>`;
+    else if (/^[-•\d]+[\.\)]\s/.test(t)) body += `<li>${inline(t.replace(/^[-•\d]+[\.\)]\s/, ""))}</li>`;
+    else if (t === "")          body += `<div class="gap"></div>`;
+    else                        body += `<p>${inline(t)}</p>`;
+    i++;
+  }
+  return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>Your Adapted Pattern — CraftersKit.com</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -236,9 +219,24 @@ function AiMode() {
 </div>
 <script>window.onload=function(){window.print()}</script>
 </body></html>`;
+}
 
+// ─── AI MODE ──────────────────────────────────────────────────────────────────
+function AiMode() {
+  const [patternText, setPatternText] = useState("");
+  const [pdfName, setPdfName] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [inputMode, setInputMode] = useState<"paste" | "pdf">("paste");
+  const [situation, setSituation] = useState("");
+  const [output, setOutput] = useState("");
+  const [running, setRunning] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const [err, setErr] = useState("");
+
+  function downloadPdf() {
     const win = window.open("", "_blank");
-    if (win) { win.document.write(html); win.document.close(); }
+    if (win) { win.document.write(buildPdfHtml(output)); win.document.close(); }
     else { setErr("Please allow pop-ups for this site to download your pattern."); }
     setDownloaded(true);
     setTimeout(() => setDownloaded(false), 2000);
@@ -441,6 +439,60 @@ function CalcMode() {
     ? Math.round(custNum * stitchScale) : null;
   const pctChange = stitchScale ? ((stitchScale - 1) * 100) : 0;
   const tighter = stitchScale !== null && stitchScale > 1;
+
+  const [calcCopied, setCalcCopied] = useState(false);
+  const [calcDownloaded, setCalcDownloaded] = useState(false);
+  const [calcErr, setCalcErr] = useState("");
+
+  const calcReport = (() => {
+    if (!hasScale) return "";
+    const lines: string[] = [];
+    lines.push("# Your Gauge Summary");
+    lines.push("");
+    lines.push("## Numbers at a Glance");
+    lines.push("");
+    const patGauge = `${patSts} sts ${patUnit === "4inch" ? "per 4 in" : "per in"}`;
+    const yourGauge = `${yourSts} sts ${yourUnit === "4inch" ? "per 4 in" : "per in"}`;
+    const tableRows: string[][] = [["", "Pattern", "Yours"], ["Stitch gauge", patGauge, yourGauge]];
+    if (patRows && yourRows) {
+      tableRows.push(["Row gauge", `${patRows} rows ${patRowUnit === "4inch" ? "per 4 in" : "per in"}`, `${yourRows} rows ${yourRowUnit === "4inch" ? "per 4 in" : "per in"}`]);
+    }
+    if (newYards !== null && origYardsNum > 0) {
+      const od = yardUnit === "m" ? `${parseFloat(origYards).toLocaleString()} m` : `${Math.round(origYardsNum).toLocaleString()} yds`;
+      const nd = yardUnit === "m" ? `${Math.round(newYards / 1.09361).toLocaleString()} m` : `${Math.round(newYards).toLocaleString()} yds`;
+      tableRows.push(["Yardage needed", od, nd]);
+    }
+    if (skeinsNeeded !== null) {
+      tableRows.push(["Skeins to buy", "—", `${skeinsNeeded} ${skeinsNeeded === 1 ? "skein" : "skeins"}`]);
+    }
+    tableRows.forEach((row, ri) => {
+      lines.push("| " + row.join(" | ") + " |");
+      if (ri === 0) lines.push("|---|---|---|");
+    });
+    lines.push("");
+    if (perfect) {
+      lines.push("**Perfect gauge match** — no adjustments needed.");
+    } else {
+      lines.push(`**Scale factor: ${stitchScale!.toFixed(3)}** — your gauge is ${Math.abs(pctChange).toFixed(0)}% ${tighter ? "tighter" : "looser"} than the pattern.`);
+      if (rowScale !== null && rowScale !== stitchScale) {
+        lines.push(`Row scale factor: ${rowScale.toFixed(3)}`);
+      }
+      if (yardDiff !== null && Math.abs(yardDiff) > 5) {
+        const diffDisplay = yardUnit === "m"
+          ? `${Math.abs(Math.round(yardDiff / 1.09361))} m`
+          : `${Math.abs(yardDiff)} yds`;
+        lines.push(yardDiff > 0
+          ? `You will need **${diffDisplay} more** yarn than the pattern calls for.`
+          : `You will need **${diffDisplay} less** yarn than the pattern calls for.`);
+      }
+    }
+    if (newCust !== null && customSts) {
+      lines.push("");
+      lines.push("## Stitch Conversion");
+      lines.push(`- Pattern says cast on **${customSts} sts** — you cast on **${newCust} sts**`);
+    }
+    return lines.join("\n");
+  })();
 
   return (
     <div className="space-y-6">
@@ -655,6 +707,44 @@ function CalcMode() {
           )}
         </div>
       </div>
+
+      {/* Gauge Report — appears once hasScale is ready */}
+      {calcReport && (
+        <>
+          <Divider emoji="📋" />
+          <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl overflow-hidden hover:border-gray-300 transition-all duration-200">
+            <div className="flex items-center justify-between px-8 py-5 border-b-2 border-dashed border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">Your Gauge Report</h2>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => { await navigator.clipboard.writeText(calcReport); setCalcCopied(true); setTimeout(() => setCalcCopied(false), 2000); }}
+                  className="text-lg font-bold text-gray-600 hover:text-[#9b2335] border-2 border-dashed border-gray-300 hover:border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105"
+                >
+                  {calcCopied ? "Copied! ✓" : "Copy to clipboard"}
+                </button>
+                <button
+                  onClick={() => {
+                    const win = window.open("", "_blank");
+                    if (win) { win.document.write(buildPdfHtml(calcReport)); win.document.close(); }
+                    else { setCalcErr("Please allow pop-ups for this site to download your report."); }
+                    setCalcDownloaded(true);
+                    setTimeout(() => setCalcDownloaded(false), 2000);
+                  }}
+                  className="text-lg font-bold text-white bg-[#9b2335] hover:bg-[#7d1c2a] border-2 border-[#9b2335] rounded-xl px-5 py-2.5 transition-all duration-200 hover:scale-105 cursor-pointer"
+                >
+                  {calcDownloaded ? "Downloaded! ✓" : "⬇ Download My Report"}
+                </button>
+              </div>
+            </div>
+            {calcErr && <p className="text-base text-red-500 px-8 pt-4">{calcErr}</p>}
+            <div className="p-8">
+              <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
+                {calcReport}
+              </pre>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="h-8" />
     </div>
