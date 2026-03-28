@@ -487,6 +487,8 @@ function CalcMode() {
     : parseFloat(origYards);
   const newYards = hasScale && rowScale && !isNaN(origYardsNum) && origYardsNum > 0
     ? origYardsNum * stitchScale! * rowScale : null;
+  const newYardsStitchOnly = hasScale && !isNaN(origYardsNum) && origYardsNum > 0
+    ? Math.round(origYardsNum * stitchScale!) : null;
   const yardDiff = newYards !== null ? Math.round(newYards - origYardsNum) : null;
   const skeinsNum = yardUnit === "m"
     ? parseFloat(skeinsYards) * 1.09361
@@ -548,6 +550,12 @@ function CalcMode() {
         lines.push(yardDiff > 0
           ? `You will need **${diffDisplay} more** yarn than the pattern calls for.`
           : `You will need **${diffDisplay} less** yarn than the pattern calls for.`);
+      }
+      if (newYardsStitchOnly !== null && newYards !== null && Math.abs(newYardsStitchOnly - Math.round(newYards)) > 5) {
+        const stitchOnlyDisplay = yardUnit === "m"
+          ? `${Math.round(newYardsStitchOnly / 1.09361)} m`
+          : `${newYardsStitchOnly} yds`;
+        lines.push(`For shawls or scarves worked to a measurement (not a fixed row count), actual yardage is closer to **${stitchOnlyDisplay}**.`);
       }
     }
     if (multiConverted.length > 0) {
