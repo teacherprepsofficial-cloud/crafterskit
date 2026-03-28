@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { auth } from "@/lib/auth";
 import { getRavelryToken } from "@/lib/ravelry-token";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY?.trim() });
@@ -40,8 +39,6 @@ Return ONLY a JSON object with:
 
 Example: {"craft":"knitting","query":"sleeveless vest","sort":"popularity","interpreted_as":"Blue ribbed knitted vest"}`;
 
-
-
 async function buildSearchParams(userQuery: string): Promise<Record<string, string>> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
@@ -49,7 +46,6 @@ async function buildSearchParams(userQuery: string): Promise<Record<string, stri
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: userQuery }],
   });
-
   const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
   const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
   try { return JSON.parse(text); } catch { return {}; }
@@ -63,19 +59,11 @@ async function buildSearchParamsFromImage(imageBase64: string, mimeType: string)
     messages: [{
       role: "user",
       content: [
-        {
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-            data: imageBase64,
-          },
-        },
+        { type: "image", source: { type: "base64", media_type: mimeType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: imageBase64 } },
         { type: "text", text: IMAGE_PROMPT },
       ],
     }],
   });
-
   const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
   const text = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
   try { return JSON.parse(text); } catch { return {}; }
@@ -87,7 +75,6 @@ export async function POST(req: NextRequest) {
     const { query, image, mimeType } = body;
 
     let searchParams: Record<string, string>;
-
     if (image && mimeType) {
       searchParams = await buildSearchParamsFromImage(image, mimeType);
     } else if (query?.trim()) {
@@ -96,67 +83,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No query provided" }, { status: 400 });
     }
 
-    const session = await auth();
-    const userToken = (session as any)?.accessToken as string | undefined;
-    const userRefreshToken = (session as any)?.refreshToken as string | undefined;
+    const token = await getRavelryToken();
+    const interpretedAs = searchParams.interpreted_as ?? null;
+    const { interpreted_as: _drop, ...ravelryParams } = searchParams;
 
-    const credentials = Buffer.from(
-      `${process.env.RAVELRY_CLIENT_ID!.trim()}:${process.env.RAVELRY_CLIENT_SECRET!.trim()}`
-    ).toString("base64");
-
-    async function ravelrySearch(p: Record<string, string>, token: string) {
+    async function ravelrySearch(p: Record<string, string>) {
       return fetch(
         `https://api.ravelry.com/patterns/search.json?${new URLSearchParams({ ...p, page_size: "20" })}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
     }
 
-    async function refreshUserToken(): Promise<string | null> {
-      if (!userRefreshToken) return null;
-      try {
-        const res = await fetch("https://www.ravelry.com/oauth2/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: `Basic ${credentials}` },
-          body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: userRefreshToken }),
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.access_token ?? null;
-      } catch { return null; }
-    }
-
-    const interpretedAs = searchParams.interpreted_as ?? null;
-    const { interpreted_as: _drop, ...ravelryParams } = searchParams;
-
-    // Try user token; if it fails, refresh it; if no user token try app token
-    let activeToken = userToken ?? await getRavelryToken();
-    let ravelryRes = await ravelrySearch(ravelryParams, activeToken);
-    if (!ravelryRes.ok) {
-      const fresh = userToken ? await refreshUserToken() : null;
-      if (fresh) {
-        activeToken = fresh;
-        ravelryRes = await ravelrySearch(ravelryParams, fresh);
-      } else if (userToken) {
-        // last resort: app token
-        try { activeToken = await getRavelryToken(); ravelryRes = await ravelrySearch(ravelryParams, activeToken); } catch { /* ignore */ }
-      }
-    }
-
+    let ravelryRes = await ravelrySearch(ravelryParams);
     if (!ravelryRes.ok) {
       return NextResponse.json({ error: "Ravelry API error" }, { status: 502 });
     }
 
     let data = await ravelryRes.json();
 
-    // If image search returned too few results, retry with just query + sort
     if (image && mimeType && (data.patterns?.length ?? 0) < 4 && ravelryParams.query) {
-      const fallback = { query: ravelryParams.query, sort: "popularity" };
-      const retryRes = await ravelrySearch(fallback, activeToken);
+      const retryRes = await ravelrySearch({ query: ravelryParams.query, sort: "popularity" });
       if (retryRes.ok) {
         const retryData = await retryRes.json();
-        if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) {
-          data = retryData;
-        }
+        if ((retryData.patterns?.length ?? 0) > (data.patterns?.length ?? 0)) data = retryData;
       }
     }
 
