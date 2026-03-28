@@ -47,7 +47,9 @@ RULES:
 - No emojis
 - No long explanations before the numbers — the numbers come first, always
 - If there's a stitch repeat issue, handle it in "Your Numbers at a Glance" with a one-line note
-- Keep "A Note From Me" to 3 sentences maximum`;
+- Keep "A Note From Me" to 3 sentences maximum
+- Do NOT rewrite chart rows line by line — for any charts or colorwork sections, just state the adjusted stitch count and row count (e.g. "Work Chart A over 17 sts x 9 rows (was 28 sts x 16 rows)")
+- Your ENTIRE response must be 700 words or fewer. Be ruthlessly concise. Every word must earn its place.`;
 
   const messageContent = patternPdf
     ? [

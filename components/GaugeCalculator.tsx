@@ -308,7 +308,18 @@ function AiMode() {
         setOutput((p) => p + decoder.decode(value, { stream: true }));
       }
     } catch { setErr("Something went wrong. Try again."); }
-    finally { setRunning(false); }
+    finally {
+      setRunning(false);
+      // Warn if response looks truncated (ends mid-sentence)
+      setOutput((prev) => {
+        const trimmed = prev.trimEnd();
+        const lastChar = trimmed.slice(-1);
+        if (trimmed.length > 100 && !".!?)\"'".includes(lastChar)) {
+          return prev + "\n\n⚠️ This response may have been cut short. Try clicking Rewrite My Pattern again — the pattern is complex and occasionally hits a length limit.";
+        }
+        return prev;
+      });
+    }
   }
 
   const ready = situation.trim().length > 0 && patternText.trim().length > 0 && !pdfLoading;
