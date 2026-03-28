@@ -359,7 +359,7 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
           </div>
         )}
         {(sections.gauge.filter(Boolean).length > 0 || sections.sizing.filter(Boolean).length > 0) && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+          <div className="flex flex-col gap-4 mt-2">
             {sections.gauge.filter(Boolean).length > 0 && (
               <div>
                 <SectionHead title="Gauge & Materials" />
