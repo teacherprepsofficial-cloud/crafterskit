@@ -244,7 +244,8 @@ function MarkdownRenderer({ content }: { content: string }) {
       while (i < lines.length && lines[i].trim().startsWith("|")) { tableLines.push(lines[i].trim()); i++; }
       const rows = tableLines.filter(l => !/^\|[\s:\-|]+\|$/.test(l));
       elements.push(
-        <table key={i} className="w-full border-collapse my-5 text-sm rounded-xl overflow-hidden">
+        <div key={i} className="overflow-x-auto -mx-1 my-5">
+        <table className="w-full border-collapse text-sm rounded-xl overflow-hidden min-w-[420px]">
           <tbody>
             {rows.map((row, ri) => {
               const cells = row.split("|").slice(1, -1);
@@ -259,6 +260,7 @@ function MarkdownRenderer({ content }: { content: string }) {
             })}
           </tbody>
         </table>
+        </div>
       );
       continue;
     }
