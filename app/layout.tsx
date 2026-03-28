@@ -13,8 +13,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CraftersKit",
-  description: "The craft companion that does your gauge math, reads your patterns, tracks your stash, and finds what you need — all in one place.",
+  title: "CraftersKit — Gauge Calculator & AI Pattern Adapter",
+  description: "Using a different yarn than your pattern? CraftersKit recalculates every stitch count, yardage, and skein total for you — instantly. Free gauge calculator and AI pattern rewriter for knitters and crocheters.",
+  metadataBase: new URL("https://crafterskit.com"),
+  openGraph: {
+    title: "CraftersKit — Gauge Calculator & AI Pattern Adapter",
+    description: "Swap your yarn, keep your pattern. CraftersKit recalculates every number for you — stitch counts, yardage, skeins to buy. Free for knitters and crocheters.",
+    url: "https://crafterskit.com",
+    siteName: "CraftersKit",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "CraftersKit — Gauge Calculator & AI Pattern Adapter",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CraftersKit — Gauge Calculator & AI Pattern Adapter",
+    description: "Swap your yarn, keep your pattern. CraftersKit recalculates every stitch count, yardage, and skein total — instantly.",
+    images: ["/og-image.png"],
+  },
+  keywords: ["gauge calculator", "knitting gauge", "crochet gauge", "yarn substitution", "pattern adapter", "knitting calculator", "crochet calculator", "stitch count converter"],
 };
 
 export default function RootLayout({
