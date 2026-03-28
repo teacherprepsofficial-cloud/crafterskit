@@ -964,7 +964,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
                   : "text-gray-400 hover:text-gray-700"
               }`}
             >
-              ✨ AI
+              ✨ AI Adapter
             </button>
             <button
               onClick={() => setMode("calc")}
