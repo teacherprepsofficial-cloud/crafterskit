@@ -737,10 +737,98 @@ function CalcMode() {
               </div>
             </div>
             {calcErr && <p className="text-base text-red-500 px-8 pt-4">{calcErr}</p>}
-            <div className="p-8">
-              <pre className="text-lg text-gray-800 whitespace-pre-wrap font-mono leading-relaxed">
-                {calcReport}
-              </pre>
+            <div className="p-8 space-y-6">
+              {/* Numbers table */}
+              <table className="w-full border-collapse text-base rounded-xl overflow-hidden">
+                <thead>
+                  <tr>
+                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold w-1/3" />
+                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold">Pattern</th>
+                    <th className="bg-[#9b2335] text-white px-5 py-3 text-left font-semibold">Yours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100">
+                    <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Stitch gauge</td>
+                    <td className="px-5 py-3 text-gray-700">{patSts} sts {patUnit === "4inch" ? "per 4 in" : "per in"}</td>
+                    <td className="px-5 py-3 text-gray-700">{yourSts} sts {yourUnit === "4inch" ? "per 4 in" : "per in"}</td>
+                  </tr>
+                  {patRows && yourRows && (
+                    <tr className="bg-[#faf7f5] border-b border-gray-100">
+                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Row gauge</td>
+                      <td className="px-5 py-3 text-gray-700">{patRows} rows {patRowUnit === "4inch" ? "per 4 in" : "per in"}</td>
+                      <td className="px-5 py-3 text-gray-700">{yourRows} rows {yourRowUnit === "4inch" ? "per 4 in" : "per in"}</td>
+                    </tr>
+                  )}
+                  {newYards !== null && origYardsNum > 0 && (
+                    <tr className="border-b border-gray-100">
+                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Yardage needed</td>
+                      <td className="px-5 py-3 text-gray-700">
+                        {yardUnit === "m" ? `${parseFloat(origYards).toLocaleString()} m` : `${Math.round(origYardsNum).toLocaleString()} yds`}
+                      </td>
+                      <td className="px-5 py-3 text-gray-700">
+                        {yardUnit === "m" ? `${Math.round(newYards / 1.09361).toLocaleString()} m` : `${Math.round(newYards).toLocaleString()} yds`}
+                      </td>
+                    </tr>
+                  )}
+                  {skeinsNeeded !== null && (
+                    <tr className="bg-[#faf7f5]">
+                      <td className="px-5 py-3 font-semibold text-[#9b2335] text-sm uppercase tracking-wide">Skeins to buy</td>
+                      <td className="px-5 py-3 text-gray-400">—</td>
+                      <td className="px-5 py-3">
+                        <span className="text-2xl font-bold text-emerald-600">{skeinsNeeded}</span>
+                        <span className="text-base text-gray-500 ml-1">{skeinsNeeded === 1 ? "skein" : "skeins"}</span>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Scale summary */}
+              <div className={`rounded-2xl px-6 py-4 border ${perfect ? "bg-emerald-50 border-emerald-100" : tighter ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"}`}>
+                {perfect ? (
+                  <p className="text-lg font-bold text-emerald-700">Perfect gauge match — no adjustments needed.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    <p className="text-base text-gray-800">
+                      <span className="font-bold">Scale factor: {stitchScale!.toFixed(3)}</span>
+                      {" — "}your gauge is{" "}
+                      <span className={`font-bold ${tighter ? "text-[#9b2335]" : "text-emerald-600"}`}>
+                        {Math.abs(pctChange).toFixed(0)}% {tighter ? "tighter" : "looser"}
+                      </span>
+                      {" "}than the pattern.
+                    </p>
+                    {rowScale !== null && rowScale !== stitchScale && (
+                      <p className="text-sm text-gray-500">Row scale factor: {rowScale.toFixed(3)}</p>
+                    )}
+                    {yardDiff !== null && Math.abs(yardDiff) > 5 && (
+                      <p className="text-base text-gray-700">
+                        You will need{" "}
+                        <span className={`font-bold ${yardDiff > 0 ? "text-[#9b2335]" : "text-emerald-600"}`}>
+                          {yardUnit === "m"
+                            ? `${Math.abs(Math.round(yardDiff / 1.09361))} m`
+                            : `${Math.abs(yardDiff)} yds`}
+                          {" "}{yardDiff > 0 ? "more" : "less"}
+                        </span>
+                        {" "}yarn than the pattern calls for.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Stitch conversion */}
+              {newCust !== null && customSts && (
+                <div className="border-t-2 border-dashed border-gray-100 pt-4">
+                  <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Stitch Conversion</p>
+                  <p className="text-lg text-gray-700">
+                    Pattern says cast on{" "}
+                    <span className="font-bold text-gray-900">{customSts} sts</span>
+                    {" — "}you cast on{" "}
+                    <span className="font-bold text-[#9b2335]">{newCust} sts</span>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </>
