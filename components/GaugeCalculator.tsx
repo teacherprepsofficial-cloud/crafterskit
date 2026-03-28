@@ -32,10 +32,11 @@ function InfoTip({ text, flipLeft }: { text: string; flipLeft?: boolean }) {
       <button
         onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}
         onFocus={() => setShow(true)} onBlur={() => setShow(false)}
+        onClick={() => setShow(v => !v)}
         className="w-7 h-7 rounded-full border-2 border-dashed border-[#e11d48]/50 text-[#e11d48] text-sm font-bold flex items-center justify-center cursor-help hover:bg-[#e11d48] hover:text-white hover:border-solid transition-all duration-200"
       >i</button>
       {show && (
-        <div className={`absolute ${flipLeft ? "right-9" : "left-9"} top-1/2 -translate-y-1/2 z-50 bg-gray-900 text-white text-base rounded-2xl px-4 py-3 w-80 shadow-2xl leading-relaxed pointer-events-none`}>
+        <div className={`absolute ${flipLeft ? "right-0" : "left-0"} top-9 z-50 bg-gray-900 text-white text-sm rounded-2xl px-4 py-3 w-72 max-w-[calc(100vw-2rem)] shadow-2xl leading-relaxed pointer-events-none`}>
           {text}
         </div>
       )}
