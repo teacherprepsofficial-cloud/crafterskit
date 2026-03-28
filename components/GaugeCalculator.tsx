@@ -7,7 +7,11 @@ function perInch(v: number, unit: "inch" | "4inch") {
 }
 function toMeters(y: number) { return Math.round(y * 0.9144); }
 
-function InfoTip({ text }: { text: string }) {
+const blockLetters = (e: React.KeyboardEvent) => {
+  if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault();
+};
+
+function InfoTip({ text, flipLeft }: { text: string; flipLeft?: boolean }) {
   const [show, setShow] = useState(false);
   return (
     <span className="relative inline-flex items-center ml-2 align-middle">
@@ -17,7 +21,7 @@ function InfoTip({ text }: { text: string }) {
         className="w-7 h-7 rounded-full border-2 border-dashed border-[#9b2335]/50 text-[#9b2335] text-sm font-bold flex items-center justify-center cursor-help hover:bg-[#9b2335] hover:text-white hover:border-solid transition-all duration-200"
       >i</button>
       {show && (
-        <div className="absolute left-9 top-1/2 -translate-y-1/2 z-50 bg-gray-900 text-white text-base rounded-2xl px-4 py-3 w-80 shadow-2xl leading-relaxed pointer-events-none">
+        <div className={`absolute ${flipLeft ? "right-9" : "left-9"} top-1/2 -translate-y-1/2 z-50 bg-gray-900 text-white text-base rounded-2xl px-4 py-3 w-80 shadow-2xl leading-relaxed pointer-events-none`}>
           {text}
         </div>
       )}
@@ -37,7 +41,7 @@ function GaugeInput({
     <div className={`bg-white border-2 border-dashed ${accent ? "border-[#9b2335]/30 hover:border-[#9b2335]/60" : "border-gray-200 hover:border-gray-400"} rounded-3xl p-7 transition-all duration-200 hover:shadow-md`}>
       <div className="flex items-start justify-between mb-1">
         <h2 className={`text-2xl font-bold ${accent ? "text-[#9b2335]" : "text-gray-800"}`}>{label}</h2>
-        <InfoTip text={tip} />
+        <InfoTip text={tip} flipLeft={accent} />
       </div>
       <p className="text-base text-gray-400 mb-5">{sublabel}</p>
 
@@ -54,6 +58,7 @@ function GaugeInput({
         <input
           type="number" min="0" step="0.5" placeholder="e.g. 20" value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={blockLetters}
           className={`w-40 text-5xl font-bold border-2 border-dashed ${border} focus:border-solid rounded-2xl px-5 py-4 focus:outline-none focus:ring-4 focus:ring-[#9b2335]/10 transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:text-3xl placeholder:font-normal`}
         />
         <span className="text-xl text-gray-400 font-medium leading-tight">
@@ -209,10 +214,12 @@ export default function GaugeCalculator({ username }: { username: string }) {
         {/* ── INSTANT GAUGE RESULT ─────────────────────────────────────── */}
         {hasScale && (
           perfect ? (
-            <div className="bg-emerald-50 border-2 border-solid border-emerald-300 rounded-3xl p-7 text-center">
-              <div className="text-5xl mb-2">🎉</div>
-              <h3 className="text-3xl font-bold text-emerald-800">Your gauge matches the pattern perfectly!</h3>
-              <p className="text-xl text-emerald-700 mt-2">Use the pattern exactly as written — no adjustments needed.</p>
+            <div className="bg-emerald-50 border-2 border-solid border-emerald-300 rounded-3xl p-6 flex items-center gap-4">
+              <span className="text-4xl">🎉</span>
+              <div>
+                <h3 className="text-2xl font-bold text-emerald-800">Your gauge matches the pattern perfectly!</h3>
+                <p className="text-lg text-emerald-700 mt-1">No stitch adjustments needed — but still check yardage below if using a different yarn.</p>
+              </div>
             </div>
           ) : (
             <div className={`border-2 border-dashed rounded-3xl p-6 ${tighter ? "bg-blue-50 border-blue-300" : "bg-amber-50 border-amber-300"}`}>
@@ -254,7 +261,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
                 <input
                   type="number" min="0" placeholder="e.g. 660" value={origYards}
                   onChange={(e) => setOrigYards(e.target.value)}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl"
+                  onKeyDown={blockLetters} className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl"
                 />
                 <span className="text-xl text-gray-400 font-medium">yards</span>
               </div>
@@ -269,7 +276,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
                 <input
                   type="number" min="0" placeholder="e.g. 220" value={skeinsYards}
                   onChange={(e) => setSkeinsYards(e.target.value)}
-                  className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl"
+                  onKeyDown={blockLetters} className="w-44 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal placeholder:text-2xl"
                 />
                 <span className="text-xl text-gray-400 font-medium">yards</span>
               </div>
@@ -344,7 +351,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
                     </div>
                     <div className="flex items-center gap-3">
                       <input type="number" min="0" step="0.5" placeholder="e.g. 28" value={val} onChange={(e) => set(e.target.value)}
-                        className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+                        onKeyDown={blockLetters} className="w-32 text-3xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid rounded-xl px-4 py-3 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
                       <span className="text-base text-gray-400">rows {unit === "4inch" ? "per 4 in" : "per in"}</span>
                     </div>
                   </div>
@@ -369,7 +376,7 @@ export default function GaugeCalculator({ username }: { username: string }) {
               <label className="text-base text-gray-500 mb-2 block">Pattern says</label>
               <div className="flex items-center gap-3">
                 <input type="number" min="0" placeholder="e.g. 120" value={customSts} onChange={(e) => setCustomSts(e.target.value)}
-                  className="w-40 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
+                  onKeyDown={blockLetters} className="w-40 text-4xl font-bold border-2 border-dashed border-gray-300 hover:border-[#9b2335]/50 focus:border-[#9b2335] focus:border-solid focus:ring-4 focus:ring-[#9b2335]/10 rounded-2xl px-5 py-4 focus:outline-none transition-all duration-200 bg-white placeholder:text-gray-200 placeholder:font-normal" />
                 <span className="text-xl text-gray-400">sts</span>
               </div>
             </div>
