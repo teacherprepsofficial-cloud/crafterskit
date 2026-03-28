@@ -220,8 +220,11 @@ export default function GaugeCalculator({ username }: { username: string }) {
     finally { setRewriting(false); }
   }
 
+  // Any gauge number entered at all
+  const anyInput = patSts || patRows || yourSts || yourRows;
+
   return (
-    <div className="min-h-screen" style={{ background: "#faf9f7" }}>
+    <div className="min-h-screen pb-32" style={{ background: "#faf9f7" }}>
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -610,6 +613,87 @@ export default function GaugeCalculator({ username }: { username: string }) {
           </>
         )}
       </div>
+
+      {/* ── STICKY LIVE RESULTS BAR ─────────────────────────────────────── */}
+      {anyInput && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl" style={{ background: "#1a1a1a" }}>
+          <div className="max-w-3xl mx-auto px-6 py-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-gray-400 uppercase tracking-widest">Live Results</span>
+              {!hasScale && (
+                <span className="text-sm text-gray-500">
+                  {!pStsPerIn || !yStsPerIn ? "Enter stitches in both steps" : "Enter rows in both steps"}
+                </span>
+              )}
+            </div>
+
+            {/* Results row */}
+            <div className="flex items-center gap-6 flex-wrap">
+
+              {/* Stitch scale */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Stitch scale</span>
+                <span className={`text-3xl font-bold ${stitchScale ? (Math.abs(stitchScale - 1) < 0.02 ? "text-emerald-400" : stitchScale > 1 ? "text-blue-400" : "text-amber-400") : "text-gray-600"}`}>
+                  {stitchScale ? `${stitchScale.toFixed(2)}×` : "—"}
+                </span>
+                {stitchScale && Math.abs(stitchScale - 1) >= 0.02 && (
+                  <span className="text-xs text-gray-500 mt-0.5">
+                    {stitchScale > 1 ? `+${((stitchScale - 1) * 100).toFixed(0)}% more sts` : `-${((1 - stitchScale) * 100).toFixed(0)}% fewer sts`}
+                  </span>
+                )}
+              </div>
+
+              <div className="w-px h-10 bg-gray-700" />
+
+              {/* Row scale */}
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 mb-1">Row scale</span>
+                <span className={`text-3xl font-bold ${rowScale ? (Math.abs(rowScale - 1) < 0.02 ? "text-emerald-400" : rowScale > 1 ? "text-blue-400" : "text-amber-400") : "text-gray-600"}`}>
+                  {rowScale ? `${rowScale.toFixed(2)}×` : "—"}
+                </span>
+                {rowScale && Math.abs(rowScale - 1) >= 0.02 && (
+                  <span className="text-xs text-gray-500 mt-0.5">
+                    {rowScale > 1 ? `+${((rowScale - 1) * 100).toFixed(0)}% more rows` : `-${((1 - rowScale) * 100).toFixed(0)}% fewer rows`}
+                  </span>
+                )}
+              </div>
+
+              {hasScale && (
+                <>
+                  <div className="w-px h-10 bg-gray-700" />
+                  {/* Yardage */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Yarn needed</span>
+                    {newYardage ? (
+                      <>
+                        <span className="text-3xl font-bold text-white">{Math.round(newYardage).toLocaleString()} <span className="text-lg font-normal text-gray-400">yds</span></span>
+                        {yardageDiff !== null && Math.abs(yardageDiff) > 2 && (
+                          <span className={`text-xs mt-0.5 ${yardageDiff > 0 ? "text-blue-400" : "text-amber-400"}`}>
+                            {yardageDiff > 0 ? "+" : ""}{yardageDiff} yds vs pattern
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-3xl font-bold text-gray-600">enter yardage ↑</span>
+                    )}
+                  </div>
+
+                  <div className="w-px h-10 bg-gray-700" />
+
+                  {/* Overall */}
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500 mb-1">Overall</span>
+                    <span className={`text-3xl font-bold ${perfectMatch ? "text-emerald-400" : stitchScale! * rowScale! > 1 ? "text-blue-400" : "text-amber-400"}`}>
+                      {perfectMatch ? "✓ Perfect match" : `${((stitchScale! * rowScale! - 1) * 100) > 0 ? "+" : ""}${((stitchScale! * rowScale! - 1) * 100).toFixed(0)}% yarn`}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
