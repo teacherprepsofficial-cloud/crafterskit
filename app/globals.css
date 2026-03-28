@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+button, a, [role="button"], label[for], input[type="file"] + label {
+  cursor: pointer;
+}
+
+button:not(:disabled), a {
+  transition: transform 0.15s ease;
+}
+
+button:not(:disabled):hover, a:hover {
+  transform: scale(1.03);
+}
+
+button:not(:disabled):active, a:active {
+  transform: scale(0.97);
+}
