@@ -277,6 +277,12 @@ export default function SearchInterface({ username }: { username: string | null 
           >
             Gauge Calculator
           </Link>
+          <Link
+            href="/chart-converter"
+            className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium"
+          >
+            Chart Converter
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           {username && (
