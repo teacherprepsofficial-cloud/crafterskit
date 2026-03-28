@@ -394,6 +394,9 @@ function AiMode() {
           </div>
         </div>
       )}
+      <p className="text-xs text-gray-400 text-center pt-2 pb-4 leading-relaxed">
+        AI-generated pattern adaptations are provided as a starting point and may contain errors. Always cross-reference with your original pattern and knit a gauge swatch before beginning your project.
+      </p>
     </div>
   );
 }
@@ -846,7 +849,10 @@ function CalcMode() {
         </>
       )}
 
-      <div className="h-8" />
+      <p className="text-xs text-gray-400 text-center leading-relaxed">
+        Calculations are based on the gauge values you provide and standard knitting math. Results are estimates — always knit a gauge swatch and verify stitch counts against your original pattern before casting on.
+      </p>
+      <div className="h-4" />
     </div>
   );
 }
