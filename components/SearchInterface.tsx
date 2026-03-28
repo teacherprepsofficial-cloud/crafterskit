@@ -283,6 +283,12 @@ export default function SearchInterface({ username }: { username: string | null 
           >
             Chart Converter
           </Link>
+          <Link
+            href="/photo-to-pattern"
+            className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium"
+          >
+            Photo to Pattern
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           {username && (

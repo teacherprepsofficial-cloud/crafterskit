@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 
-export default function ChartConverterPage() {
+export default function PhotoToPatternPage() {
   const [image, setImage] = useState<string | null>(null);
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
   const [preview, setPreview] = useState<string | null>(null);
@@ -64,19 +64,19 @@ export default function ChartConverterPage() {
     if (f) loadFile(f);
   }, []);
 
-  async function handleConvert() {
+  async function handleGenerate() {
     if (!image) return;
     setLoading(true);
     setError("");
     setOutput("");
 
     try {
-      const res = await fetch("/api/chart-convert", {
+      const res = await fetch("/api/photo-to-pattern", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image, mimeType, notes }),
       });
-      if (!res.ok) throw new Error("Conversion failed");
+      if (!res.ok) throw new Error("Generation failed");
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       while (true) {
@@ -98,96 +98,103 @@ export default function ChartConverterPage() {
   function handleDownload() {
     const lines = output.split("\n");
 
-    // Split into sections
-    const sections: Record<string, string[]> = { about: [], key: [], instructions: [], notes: [], setup: [] };
+    const sections: Record<string, string[]> = { about: [], canSee: [], gauge: [], sizing: [], instructions: [], notes: [], abbreviations: [] };
     let current = "about";
     for (const line of lines) {
       if (line.startsWith("## About")) { current = "about"; continue; }
-      if (line.startsWith("## Stitch Key")) { current = "key"; continue; }
-      if (line.startsWith("## Written Instructions")) { current = "instructions"; continue; }
+      if (line.startsWith("## What I Can See")) { current = "canSee"; continue; }
+      if (line.startsWith("## Gauge")) { current = "gauge"; continue; }
+      if (line.startsWith("## Sizing")) { current = "sizing"; continue; }
+      if (line.startsWith("## Pattern Instructions")) { current = "instructions"; continue; }
       if (line.startsWith("## Notes")) { current = "notes"; continue; }
-      if (current === "instructions" && line.startsWith("**Setup")) { sections.setup.push(line); continue; }
       sections[current]?.push(line);
     }
 
-    function rowHtml(line: string, idx: number): string {
+    function md(line: string): string {
       if (line === "") return "";
-      const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-      if (m) {
-        const bg = idx % 2 === 0 ? "#fafafa" : "#ffffff";
-        return `<div class="row" style="background:${bg}"><span class="row-label">${m[1]}</span><span class="row-body">${m[2]}</span></div>`;
+      if (line.startsWith("**") && line.includes(":**")) {
+        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+        if (m) return `<p><strong>${m[1]}:</strong> ${m[2]}</p>`;
+      }
+      if (/^\*\*(Row|Round|Rnd|Round|Section|Setup|Abbreviations|Cast|Bind|Finishing)/.test(line)) {
+        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+        if (m) return `<p class="instr-head"><strong>${m[1]}:</strong> ${m[2]}</p>`;
       }
       if (line.startsWith("- ")) return `<li>${line.slice(2)}</li>`;
+      if (line.startsWith("# ")) return `<h3>${line.slice(2)}</h3>`;
       return `<p>${line}</p>`;
     }
 
     const aboutText = sections.about.filter(Boolean).join(" ");
-    const setupLine = sections.setup[0] || "";
-    const setupM = setupLine.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-    const setupHtml = setupM ? `<div class="setup-box"><strong>${setupM[1]}:</strong> ${setupM[2]}</div>` : "";
-    const keyHtml = sections.key.filter(Boolean).map(l => l.startsWith("- ") ? `<li>${l.slice(2)}</li>` : `<p>${l}</p>`).join("\n");
-    const instrHtml = sections.instructions.map((l, i) => rowHtml(l, i)).join("\n");
+    const canSeeHtml = sections.canSee.filter(Boolean).map(md).join("\n");
+    const gaugeHtml = sections.gauge.filter(Boolean).map(md).join("\n");
+    const sizingHtml = sections.sizing.filter(Boolean).map(md).join("\n");
+    const instrHtml = sections.instructions.filter(l => l !== "").map(md).join("\n");
     const notesHtml = sections.notes.filter(Boolean).map(l => `<p>${l}</p>`).join("\n");
 
-    const imgTag = preview ? `<img src="${preview}" style="max-height:160px;max-width:180px;border-radius:6px;border:1px solid #e5e5e5;object-fit:contain;" alt="Chart" />` : "";
+    const imgTag = preview ? `<img src="${preview}" style="max-height:200px;max-width:200px;border-radius:8px;border:1px solid #e5e5e5;object-fit:contain;" alt="Garment" />` : "";
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Written Pattern — CraftersKit</title>
+<title>Generated Pattern — CraftersKit</title>
 <style>
   @page { margin: 1.8cm 2cm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.6; }
-  .masthead { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #be123c; padding-bottom: 10px; margin-bottom: 16px; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.65; }
+  .masthead { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #be123c; padding-bottom: 10px; margin-bottom: 16px; gap: 20px; }
+  .masthead-left { flex: 1; }
   .masthead-left h1 { font-family: Georgia, serif; font-size: 18pt; font-weight: bold; color: #1a1a1a; }
-  .masthead-left p { font-size: 9pt; color: #555; margin-top: 3px; font-style: italic; }
-  .brand { font-size: 8.5pt; color: #be123c; font-family: Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; font-weight: bold; }
-  .top-cols { display: flex; gap: 20px; margin-bottom: 18px; }
-  .key-box { flex: 1; background: #fdf8f8; border: 1px solid #f0d0d0; border-radius: 6px; padding: 12px 14px; }
-  .key-box h2 { font-family: Arial, sans-serif; font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #be123c; margin-bottom: 8px; }
-  .key-box li { font-size: 9.5pt; list-style: none; padding: 2px 0; border-bottom: 1px dotted #e8d0d0; }
-  .key-box li:last-child { border-bottom: none; }
-  .chart-thumb { flex-shrink: 0; display: flex; align-items: center; }
-  .setup-box { background: #f5f5f5; border-left: 3px solid #be123c; padding: 8px 12px; margin-bottom: 14px; font-size: 10pt; border-radius: 0 4px 4px 0; }
-  .setup-box strong { color: #be123c; }
+  .masthead-left p { font-size: 9.5pt; color: #444; margin-top: 4px; font-style: italic; }
+  .brand { font-size: 8.5pt; color: #be123c; font-family: Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
+  .photo-col { flex-shrink: 0; }
   h2.section { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; border-bottom: 1px solid #f0d0d0; padding-bottom: 4px; margin: 16px 0 8px; }
-  .row { display: flex; gap: 10px; padding: 4px 6px; border-radius: 3px; page-break-inside: avoid; }
-  .row-label { font-weight: 700; font-family: Arial, sans-serif; font-size: 9.5pt; color: #be123c; white-space: nowrap; min-width: 100px; flex-shrink: 0; }
-  .row-body { font-size: 10pt; color: #1a1a1a; }
+  .detail-box { background: #fdf8f8; border: 1px solid #f0d0d0; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; }
+  .detail-box li { font-size: 9.5pt; list-style: disc; margin-left: 16px; padding: 2px 0; }
+  .detail-box p { font-size: 9.5pt; padding: 2px 0; }
+  .detail-box strong { color: #be123c; }
+  .two-col { display: flex; gap: 16px; margin-bottom: 14px; }
+  .two-col > div { flex: 1; }
+  .instr-section { margin-bottom: 6px; }
+  p { margin: 2px 0; font-size: 10pt; }
+  p.instr-head { margin-top: 8px; }
+  p.instr-head strong { color: #be123c; }
+  li { margin: 1px 0; }
+  strong { }
   .notes { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 5px; padding: 10px 14px; margin-top: 16px; font-size: 9.5pt; font-style: italic; color: #444; }
   .notes h2 { font-style: normal; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; margin-bottom: 6px; }
+  .disclaimer { background: #fffbf0; border: 1px solid #fde68a; border-radius: 5px; padding: 8px 12px; margin-top: 12px; font-size: 8.5pt; color: #78350f; font-style: italic; }
   .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e5e5; font-size: 7.5pt; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
-  p { margin: 2px 0; }
-  li { margin: 1px 0; }
 </style>
 </head>
 <body>
 <div class="masthead">
   <div class="masthead-left">
-    <h1>Written Pattern Instructions</h1>
+    <h1>Generated Knitting Pattern</h1>
     <p>${aboutText}</p>
   </div>
+  ${imgTag ? `<div class="photo-col">${imgTag}</div>` : ""}
   <div class="brand">CraftersKit.com</div>
 </div>
 
-<div class="top-cols">
-  <div class="key-box">
-    <h2>Stitch Key</h2>
-    ${keyHtml}
-  </div>
-  ${imgTag ? `<div class="chart-thumb">${imgTag}</div>` : ""}
+<div class="disclaimer">
+  This pattern was AI-generated from a photo. Stitch counts, gauge, and shaping are estimates — always swatch and adjust as needed before starting your project.
 </div>
 
-${setupHtml}
+${canSeeHtml ? `<h2 class="section">What I Can See</h2><div class="detail-box">${canSeeHtml}</div>` : ""}
 
-<h2 class="section">Written Instructions</h2>
-${instrHtml}
+<div class="two-col">
+  ${gaugeHtml ? `<div><h2 class="section">Gauge &amp; Materials</h2><div class="detail-box">${gaugeHtml}</div></div>` : ""}
+  ${sizingHtml ? `<div><h2 class="section">Sizing</h2><div class="detail-box">${sizingHtml}</div></div>` : ""}
+</div>
+
+<h2 class="section">Pattern Instructions</h2>
+<div class="instr-section">${instrHtml}</div>
 
 ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
 
-<div class="footer">Generated by CraftersKit &mdash; crafterskit.com &mdash; Always double-check stitch counts against the original chart as you work.</div>
+<div class="footer">Generated by CraftersKit &mdash; crafterskit.com &mdash; AI-generated pattern. Always swatch and adjust stitch counts to match your gauge before beginning.</div>
 </body>
 </html>`;
 
@@ -199,14 +206,12 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
     setTimeout(() => { win.print(); }, 500);
   }
 
-  // Render markdown-ish output
   function renderOutput(text: string) {
     return text.split("\n").map((line, i) => {
       if (line.startsWith("## ")) return <h2 key={i} className="text-xl font-bold text-gray-900 mt-6 mb-2">{line.slice(3)}</h2>;
-      if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-gray-900 mt-1">{line.slice(2, -2)}</p>;
-      if (/^\*\*Row \d+/.test(line) || /^\*\*Round \d+/.test(line) || /^\*\*Rnd \d+/.test(line)) {
-        const match = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-        if (match) return <p key={i} className="mt-1"><span className="font-semibold text-gray-900">{match[1]}:</span> <span className="text-gray-800">{match[2]}</span></p>;
+      if (/^\*\*[^*]+\*\*:?\s/.test(line)) {
+        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+        if (m) return <p key={i} className="mt-1"><span className="font-semibold text-gray-900">{m[1]}:</span> <span className="text-gray-800">{m[2]}</span></p>;
       }
       if (line.startsWith("- ")) return <li key={i} className="ml-4 text-gray-800 list-disc">{line.slice(2)}</li>;
       if (line === "") return <div key={i} className="h-2" />;
@@ -225,7 +230,7 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
       {dragging && (
         <div className="fixed inset-0 z-50 bg-[#e11d48]/10 border-4 border-dashed border-[#e11d48] flex items-center justify-center pointer-events-none">
           <div className="bg-white rounded-2xl px-10 py-8 shadow-xl flex flex-col items-center gap-3">
-            <p className="text-lg font-semibold text-gray-800">Drop your chart image here</p>
+            <p className="text-lg font-semibold text-gray-800">Drop your garment photo here</p>
           </div>
         </div>
       )}
@@ -233,13 +238,13 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4">
         <Link href="/" className="text-xl font-bold text-gray-900">CraftersKit</Link>
         <Link href="/gauge-calculator" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Gauge Calculator</Link>
-        <span className="text-sm text-[#e11d48] font-medium">Chart Converter</span>
-        <Link href="/photo-to-pattern" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Photo to Pattern</Link>
+        <Link href="/chart-converter" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Chart Converter</Link>
+        <span className="text-sm text-[#e11d48] font-medium">Photo to Pattern</span>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Chart to Written Pattern</h2>
-        <p className="text-gray-500 mb-6">Upload a photo of any knitting or crochet chart and get complete written row-by-row instructions.</p>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-1">Photo to Pattern</h2>
+        <p className="text-gray-500 mb-6">Upload a photo of any knitted or crocheted garment and get a full written pattern to recreate it.</p>
 
         {/* Upload area */}
         {!preview ? (
@@ -249,16 +254,17 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
             className="w-full border-2 border-dashed border-gray-300 rounded-xl py-16 flex flex-col items-center gap-3 text-gray-400 hover:border-[#e11d48] hover:text-[#e11d48] transition-colors cursor-pointer bg-white"
           >
             <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
             </svg>
-            <span className="font-medium">Upload chart image</span>
+            <span className="font-medium">Upload garment photo</span>
             <span className="text-sm">or drag and drop — JPG, PNG, HEIC</span>
           </button>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
             <div className="flex items-start gap-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="Chart preview" className="max-h-64 rounded-lg border border-gray-200 object-contain" />
+              <img src={preview} alt="Garment preview" className="max-h-64 rounded-lg border border-gray-200 object-contain" />
               <div className="flex flex-col gap-2">
                 <button
                   type="button"
@@ -280,7 +286,6 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
 
-        {/* Optional notes */}
         {preview && (
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -290,31 +295,29 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. This is knitting worked flat, the grey squares are knit stitches"
+              placeholder="e.g. This is knitted top-down, worsted weight, adult size medium"
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#e11d48]"
             />
           </div>
         )}
 
-        {/* Convert button */}
         {preview && (
           <button
             type="button"
-            onClick={handleConvert}
+            onClick={handleGenerate}
             disabled={loading}
             className="mt-4 w-full bg-[#e11d48] hover:bg-[#be123c] disabled:bg-gray-300 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
           >
-            {loading ? "Converting chart..." : "Convert to Written Pattern"}
+            {loading ? "Generating pattern..." : "Generate Pattern"}
           </button>
         )}
 
         {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
 
-        {/* Output */}
         {output && (
           <div className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900">Written Instructions</h3>
+              <h3 className="font-semibold text-gray-900">Generated Pattern</h3>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopy}
@@ -332,6 +335,9 @@ ${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
                 </button>
               </div>
             </div>
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+              AI-generated pattern — always swatch and adjust stitch counts before starting your project.
+            </p>
             <div className="text-sm leading-relaxed">{renderOutput(output)}</div>
           </div>
         )}
