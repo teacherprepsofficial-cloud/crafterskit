@@ -409,7 +409,7 @@ function AiMode() {
         disabled={!ready || running}
         className="w-full py-4 sm:py-6 bg-[#e11d48] text-white text-xl sm:text-2xl font-bold rounded-3xl hover:bg-[#be123c] hover:scale-[1.01] cursor-pointer transition-all duration-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:scale-100 shadow-lg"
       >
-        {running ? "✨ Rewriting your pattern…" : "✨ Rewrite My Pattern"}
+        {running ? "✨ Adapting your pattern…" : "✨ Adapt My Pattern"}
       </button>
       {err && <p className="text-lg text-red-500 text-center">{err}</p>}
 
