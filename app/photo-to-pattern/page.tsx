@@ -454,6 +454,7 @@ ${notesText ? `<div class="notes"><strong>Notes:</strong> ${notesText}</div>` : 
         <Link href="/gauge-calculator" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Gauge Calculator</Link>
         <Link href="/chart-converter" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Chart Converter</Link>
         <span className="text-sm text-[#e11d48] font-medium">Photo to Pattern</span>
+        <Link href="/written-to-chart" className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium">Written to Chart</Link>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
