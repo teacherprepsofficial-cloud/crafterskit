@@ -127,7 +127,7 @@ export default function PhotoToPatternPage() {
           while (i < arr.length && isTableRow(arr[i])) { tableLines.push(arr[i]); i++; }
           const hasSep = tableLines.some(l => isSeparator(l));
           if (!hasSep) {
-            out.push(`<pre style="font-family:monospace;font-size:8.5pt;background:#f9f9f9;border:1px solid #e5e5e5;border-radius:4px;padding:8px;margin:6px 0;overflow-x:auto;white-space:pre;">${tableLines.join("\n")}</pre>`);
+            out.push(`<pre class="schema">${tableLines.join("\n")}</pre>`);
             continue;
           }
           const dataRows = tableLines.filter(l => !isSeparator(l));
@@ -142,8 +142,11 @@ export default function PhotoToPatternPage() {
         } else if (line === "" || /^---+$/.test(line.trim())) {
           // skip blank lines and horizontal rules
           i++;
+        } else if (line.startsWith("#### ")) {
+          out.push(`<h3 class="sub">${inlineBold(line.slice(5))}</h3>`);
+          i++;
         } else if (line.startsWith("### ")) {
-          out.push(`<h3 class="sub-section">${inlineBold(line.slice(4))}</h3>`);
+          out.push(`<h3 class="sub">${inlineBold(line.slice(4))}</h3>`);
           i++;
         } else if (line.startsWith("- ")) {
           out.push(`<li>${inlineBold(line.slice(2))}</li>`);
@@ -151,7 +154,7 @@ export default function PhotoToPatternPage() {
         } else if (/^\*\*/.test(line)) {
           const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
           if (m) {
-            out.push(`<p class="instr-head"><strong>${m[1]}:</strong> ${inlineBold(m[2])}</p>`);
+            out.push(`<p class="rnd"><strong>${m[1]}:</strong> ${inlineBold(m[2])}</p>`);
           } else {
             out.push(`<p>${inlineBold(line)}</p>`);
           }
@@ -164,14 +167,14 @@ export default function PhotoToPatternPage() {
       return out.join("\n");
     }
 
-    const aboutText = sections.about.filter(Boolean).join(" ");
-    const canSeeHtml = processLinesForPdf(sections.canSee);
+    // Strip any leading markdown heading markers from about text
+    const rawAbout = sections.about.filter(Boolean).join(" ").replace(/^#+\s*/, "");
     const gaugeHtml = processLinesForPdf(sections.gauge);
     const sizingHtml = processLinesForPdf(sections.sizing);
     const instrHtml = processLinesForPdf(sections.instructions);
-    const notesHtml = sections.notes.filter(Boolean).map(l => `<p>${inlineBold(l)}</p>`).join("\n");
+    const notesText = sections.notes.filter(Boolean).join(" ");
 
-    const imgTag = preview ? `<img src="${preview}" style="max-height:200px;max-width:200px;border-radius:8px;border:1px solid #e5e5e5;object-fit:contain;" alt="Garment" />` : "";
+    const imgTag = preview ? `<img src="${preview}" style="max-height:220px;max-width:220px;object-fit:contain;border-radius:4px;" alt="Garment" />` : "";
 
     const html = `<!DOCTYPE html>
 <html>
@@ -179,66 +182,82 @@ export default function PhotoToPatternPage() {
 <meta charset="utf-8">
 <title>Generated Pattern — CraftersKit</title>
 <style>
-  @page { margin: 1.8cm 2cm; }
+  @page { margin: 2cm 2.2cm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.65; }
-  .masthead { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #be123c; padding-bottom: 10px; margin-bottom: 16px; gap: 20px; }
-  .masthead-left { flex: 1; }
-  .masthead-left h1 { font-family: Georgia, serif; font-size: 18pt; font-weight: bold; color: #1a1a1a; }
-  .masthead-left p { font-size: 9.5pt; color: #444; margin-top: 4px; font-style: italic; }
-  .brand { font-size: 8.5pt; color: #be123c; font-family: Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; font-weight: bold; white-space: nowrap; }
-  .photo-col { flex-shrink: 0; }
-  h2.section { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; border-bottom: 1px solid #f0d0d0; padding-bottom: 4px; margin: 16px 0 8px; }
-  .detail-box { background: #fdf8f8; border: 1px solid #f0d0d0; border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; }
-  .detail-box li { font-size: 9.5pt; list-style: disc; margin-left: 16px; padding: 2px 0; }
-  .detail-box p { font-size: 9.5pt; padding: 2px 0; }
-  .detail-box strong { color: #be123c; }
-  .two-col { display: flex; gap: 16px; margin-bottom: 14px; }
-  .two-col > div { flex: 1; }
-  .instr-section { margin-bottom: 6px; }
-  p { margin: 2px 0; font-size: 10pt; }
-  p.instr-head { margin-top: 8px; }
-  p.instr-head strong { color: #be123c; }
-  li { margin: 1px 0; }
-  strong { }
-  .notes { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 5px; padding: 10px 14px; margin-top: 16px; font-size: 9.5pt; font-style: italic; color: #444; }
-  .notes h2 { font-style: normal; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; margin-bottom: 6px; }
-  .disclaimer { background: #fffbf0; border: 1px solid #fde68a; border-radius: 5px; padding: 8px 12px; margin-top: 12px; font-size: 8.5pt; color: #78350f; font-style: italic; }
-  .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e5e5; font-size: 7.5pt; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
-  h3.sub-section { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; color: #1a1a1a; margin: 14px 0 4px; border-bottom: 1px solid #e5e5e5; padding-bottom: 3px; }
-  .md-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 4px 0; }
-  .md-table th { background: #be123c; color: #fff; font-family: Arial, sans-serif; font-size: 9pt; font-weight: 700; text-align: left; padding: 5px 8px; }
-  .md-table td { padding: 4px 8px; border-bottom: 1px solid #f0d0d0; vertical-align: top; }
-  .md-table tr:nth-child(even) td { background: #fdf8f8; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.7; }
+
+  /* Masthead */
+  .masthead { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 6px; }
+  .masthead-text { flex: 1; }
+  .brand { font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #be123c; text-align: right; white-space: nowrap; }
+  h1.title { font-family: Arial, Helvetica, sans-serif; font-size: 22pt; font-weight: 900; color: #1a1a1a; line-height: 1.15; margin-bottom: 6px; }
+  .subtitle { font-size: 9.5pt; color: #555; font-style: italic; line-height: 1.5; }
+  .rule { border: none; border-top: 2px solid #be123c; margin: 10px 0 16px; }
+  .disclaimer { font-size: 8pt; color: #888; font-style: italic; margin-bottom: 16px; }
+
+  /* Section headers — professional, tight */
+  h2.sec { font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #be123c; border-bottom: 1.5px solid #be123c; padding-bottom: 2px; margin: 22px 0 9px; }
+
+  /* Sub-section (### and ####) */
+  h3.sub { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; font-weight: 700; color: #1a1a1a; margin: 14px 0 3px; }
+
+  /* Spec grid for materials+gauge */
+  .spec-grid { display: flex; gap: 32px; margin-bottom: 4px; }
+  .spec-col { flex: 1; }
+
+  /* Body elements */
+  p { font-size: 10pt; margin: 3px 0; }
+  p.rnd { margin-top: 5px; }
+  p.rnd strong { font-family: Arial, Helvetica, sans-serif; font-size: 9.5pt; }
+  li { font-size: 10pt; list-style: disc; margin-left: 18px; padding: 1.5px 0; }
+  strong { font-family: Arial, Helvetica, sans-serif; }
+
+  /* Abbreviations 2-col */
+  .abbr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 24px; margin: 6px 0; }
+  .abbr-grid p { font-size: 9.5pt; margin: 2px 0; }
+
+  /* Tables */
+  .md-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; margin: 8px 0; page-break-inside: avoid; }
+  .md-table th { background: #be123c; color: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; font-weight: 700; text-align: left; padding: 5px 9px; }
+  .md-table td { padding: 4px 9px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }
+  .md-table tr:nth-child(even) td { background: #f7f7f7; }
+
+  /* ASCII schematic */
+  pre.schema { font-family: 'Courier New', monospace; font-size: 8pt; background: #f9f9f9; border: 1px solid #e0e0e0; padding: 8px 10px; margin: 8px 0; white-space: pre; overflow-x: auto; }
+
+  /* Notes */
+  .notes { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 9.5pt; font-style: italic; color: #555; }
+  .notes strong { font-style: normal; }
+
+  /* Footer */
+  .footer { margin-top: 24px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 7pt; color: #bbb; font-family: Arial, Helvetica, sans-serif; text-align: center; }
 </style>
 </head>
 <body>
+
 <div class="masthead">
-  <div class="masthead-left">
-    <h1>Generated Knitting Pattern</h1>
-    <p>${aboutText}</p>
+  <div class="masthead-text">
+    <h1 class="title">Knitting Pattern</h1>
+    <p class="subtitle">${rawAbout}</p>
   </div>
-  ${imgTag ? `<div class="photo-col">${imgTag}</div>` : ""}
+  ${imgTag ? `<div>${imgTag}</div>` : ""}
   <div class="brand">CraftersKit.com</div>
 </div>
+<hr class="rule">
+<p class="disclaimer">AI-generated from photo &mdash; always swatch and adjust before starting.</p>
 
-<div class="disclaimer">
-  This pattern was AI-generated from a photo. Stitch counts, gauge, and shaping are estimates — always swatch and adjust as needed before starting your project.
-</div>
+${gaugeHtml || sizingHtml ? `
+<div class="spec-grid">
+  ${gaugeHtml ? `<div><h2 class="sec">Materials &amp; Gauge</h2>${gaugeHtml}</div>` : ""}
+  ${sizingHtml ? `<div><h2 class="sec">Sizes &amp; Measurements</h2>${sizingHtml}</div>` : ""}
+</div>` : ""}
 
-${canSeeHtml ? `<h2 class="section">What I Can See</h2><div class="detail-box">${canSeeHtml}</div>` : ""}
+<h2 class="sec">Pattern Instructions</h2>
+${instrHtml}
 
-<div class="two-col">
-  ${gaugeHtml ? `<div><h2 class="section">Gauge &amp; Materials</h2><div class="detail-box">${gaugeHtml}</div></div>` : ""}
-  ${sizingHtml ? `<div><h2 class="section">Sizing</h2><div class="detail-box">${sizingHtml}</div></div>` : ""}
-</div>
+${notesText ? `<div class="notes"><strong>Notes:</strong> ${notesText}</div>` : ""}
 
-<h2 class="section">Pattern Instructions</h2>
-<div class="instr-section">${instrHtml}</div>
-
-${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
-
-<div class="footer">Generated by CraftersKit &mdash; crafterskit.com &mdash; AI-generated pattern. Always swatch and adjust stitch counts to match your gauge before beginning.</div>
+<div class="footer">Generated by CraftersKit &mdash; crafterskit.com &mdash; AI estimate only. Always swatch to verify gauge before beginning.</div>
 </body>
 </html>`;
 

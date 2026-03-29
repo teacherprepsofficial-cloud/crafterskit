@@ -110,26 +110,28 @@ export default function ChartConverterPage() {
       sections[current]?.push(line);
     }
 
+    function ib(s: string) { return s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"); }
+
     function rowHtml(line: string, idx: number): string {
-      if (line === "") return "";
+      if (!line.trim() || /^---+$/.test(line.trim())) return "";
       const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
       if (m) {
-        const bg = idx % 2 === 0 ? "#fafafa" : "#ffffff";
-        return `<div class="row" style="background:${bg}"><span class="row-label">${m[1]}</span><span class="row-body">${m[2]}</span></div>`;
+        const bg = idx % 2 === 0 ? "#f8f8f8" : "#ffffff";
+        return `<div class="row" style="background:${bg}"><span class="row-label">${m[1]}</span><span class="row-body">${ib(m[2])}</span></div>`;
       }
-      if (line.startsWith("- ")) return `<li>${line.slice(2)}</li>`;
-      return `<p>${line}</p>`;
+      if (line.startsWith("- ")) return `<li>${ib(line.slice(2))}</li>`;
+      return `<p>${ib(line)}</p>`;
     }
 
-    const aboutText = sections.about.filter(Boolean).join(" ");
+    const aboutText = sections.about.filter(Boolean).join(" ").replace(/^#+\s*/, "");
     const setupLine = sections.setup[0] || "";
     const setupM = setupLine.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-    const setupHtml = setupM ? `<div class="setup-box"><strong>${setupM[1]}:</strong> ${setupM[2]}</div>` : "";
-    const keyHtml = sections.key.filter(Boolean).map(l => l.startsWith("- ") ? `<li>${l.slice(2)}</li>` : `<p>${l}</p>`).join("\n");
+    const setupHtml = setupM ? `<p class="setup"><strong>${setupM[1]}:</strong> ${ib(setupM[2])}</p>` : "";
+    const keyHtml = sections.key.filter(Boolean).map(l => l.startsWith("- ") ? `<li>${ib(l.slice(2))}</li>` : `<p>${ib(l)}</p>`).join("\n");
     const instrHtml = sections.instructions.map((l, i) => rowHtml(l, i)).join("\n");
-    const notesHtml = sections.notes.filter(Boolean).map(l => `<p>${l}</p>`).join("\n");
+    const notesText = sections.notes.filter(Boolean).join(" ");
 
-    const imgTag = preview ? `<img src="${preview}" style="max-height:160px;max-width:180px;border-radius:6px;border:1px solid #e5e5e5;object-fit:contain;" alt="Chart" />` : "";
+    const imgTag = preview ? `<img src="${preview}" style="max-height:180px;max-width:200px;object-fit:contain;border-radius:4px;" alt="Chart" />` : "";
 
     const html = `<!DOCTYPE html>
 <html>
@@ -137,55 +139,64 @@ export default function ChartConverterPage() {
 <meta charset="utf-8">
 <title>Written Pattern — CraftersKit</title>
 <style>
-  @page { margin: 1.8cm 2cm; }
+  @page { margin: 2cm 2.2cm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.6; }
-  .masthead { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #be123c; padding-bottom: 10px; margin-bottom: 16px; }
-  .masthead-left h1 { font-family: Georgia, serif; font-size: 18pt; font-weight: bold; color: #1a1a1a; }
-  .masthead-left p { font-size: 9pt; color: #555; margin-top: 3px; font-style: italic; }
-  .brand { font-size: 8.5pt; color: #be123c; font-family: Arial, sans-serif; letter-spacing: 0.06em; text-transform: uppercase; font-weight: bold; }
-  .top-cols { display: flex; gap: 20px; margin-bottom: 18px; }
-  .key-box { flex: 1; background: #fdf8f8; border: 1px solid #f0d0d0; border-radius: 6px; padding: 12px 14px; }
-  .key-box h2 { font-family: Arial, sans-serif; font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #be123c; margin-bottom: 8px; }
-  .key-box li { font-size: 9.5pt; list-style: none; padding: 2px 0; border-bottom: 1px dotted #e8d0d0; }
-  .key-box li:last-child { border-bottom: none; }
-  .chart-thumb { flex-shrink: 0; display: flex; align-items: center; }
-  .setup-box { background: #f5f5f5; border-left: 3px solid #be123c; padding: 8px 12px; margin-bottom: 14px; font-size: 10pt; border-radius: 0 4px 4px 0; }
-  .setup-box strong { color: #be123c; }
-  h2.section { font-family: Arial, sans-serif; font-size: 10pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; border-bottom: 1px solid #f0d0d0; padding-bottom: 4px; margin: 16px 0 8px; }
-  .row { display: flex; gap: 10px; padding: 4px 6px; border-radius: 3px; page-break-inside: avoid; }
-  .row-label { font-weight: 700; font-family: Arial, sans-serif; font-size: 9.5pt; color: #be123c; white-space: nowrap; min-width: 100px; flex-shrink: 0; }
+  body { font-family: Georgia, 'Times New Roman', serif; font-size: 10.5pt; color: #1a1a1a; line-height: 1.7; }
+
+  .masthead { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 6px; }
+  .masthead-text { flex: 1; }
+  .brand { font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #be123c; text-align: right; white-space: nowrap; }
+  h1.title { font-family: Arial, Helvetica, sans-serif; font-size: 22pt; font-weight: 900; color: #1a1a1a; line-height: 1.15; margin-bottom: 6px; }
+  .subtitle { font-size: 9.5pt; color: #555; font-style: italic; line-height: 1.5; }
+  .rule { border: none; border-top: 2px solid #be123c; margin: 10px 0 16px; }
+
+  h2.sec { font-family: Arial, Helvetica, sans-serif; font-size: 7.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #be123c; border-bottom: 1.5px solid #be123c; padding-bottom: 2px; margin: 22px 0 9px; }
+
+  /* Stitch key */
+  .key-list { margin: 0; }
+  .key-list li { font-size: 10pt; list-style: none; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
+  .key-list li:last-child { border-bottom: none; }
+
+  /* Setup callout */
+  p.setup { font-size: 10pt; border-left: 3px solid #be123c; padding: 6px 10px; margin: 12px 0; background: #fafafa; }
+  p.setup strong { font-family: Arial, Helvetica, sans-serif; color: #be123c; }
+
+  /* Instruction rows */
+  .row { display: flex; gap: 12px; padding: 3.5px 6px; page-break-inside: avoid; }
+  .row-label { font-weight: 700; font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #be123c; white-space: nowrap; min-width: 110px; flex-shrink: 0; }
   .row-body { font-size: 10pt; color: #1a1a1a; }
-  .notes { background: #fafafa; border: 1px solid #e5e5e5; border-radius: 5px; padding: 10px 14px; margin-top: 16px; font-size: 9.5pt; font-style: italic; color: #444; }
-  .notes h2 { font-style: normal; font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.07em; color: #be123c; margin-bottom: 6px; }
-  .footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #e5e5e5; font-size: 7.5pt; color: #aaa; font-family: Arial, sans-serif; text-align: center; }
-  p { margin: 2px 0; }
-  li { margin: 1px 0; }
+
+  p { font-size: 10pt; margin: 3px 0; }
+  li { font-size: 10pt; list-style: disc; margin-left: 18px; padding: 1.5px 0; }
+  strong { font-family: Arial, Helvetica, sans-serif; }
+
+  .notes { margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 9.5pt; font-style: italic; color: #555; }
+  .notes strong { font-style: normal; }
+
+  .footer { margin-top: 24px; padding-top: 6px; border-top: 1px solid #e0e0e0; font-size: 7pt; color: #bbb; font-family: Arial, Helvetica, sans-serif; text-align: center; }
 </style>
 </head>
 <body>
+
 <div class="masthead">
-  <div class="masthead-left">
-    <h1>Written Pattern Instructions</h1>
-    <p>${aboutText}</p>
+  <div class="masthead-text">
+    <h1 class="title">Written Pattern</h1>
+    <p class="subtitle">${aboutText}</p>
   </div>
+  ${imgTag ? `<div>${imgTag}</div>` : ""}
   <div class="brand">CraftersKit.com</div>
 </div>
+<hr class="rule">
 
-<div class="top-cols">
-  <div class="key-box">
-    <h2>Stitch Key</h2>
-    ${keyHtml}
-  </div>
-  ${imgTag ? `<div class="chart-thumb">${imgTag}</div>` : ""}
-</div>
+<h2 class="sec">Stitch Key</h2>
+<ul class="key-list">${keyHtml}</ul>
 
 ${setupHtml}
 
-<h2 class="section">Written Instructions</h2>
+<h2 class="sec">Written Instructions</h2>
 ${instrHtml}
 
-${notesHtml ? `<div class="notes"><h2>Notes</h2>${notesHtml}</div>` : ""}
+${notesText ? `<div class="notes"><strong>Notes:</strong> ${notesText}</div>` : ""}
 
 <div class="footer">Generated by CraftersKit &mdash; crafterskit.com &mdash; Always double-check stitch counts against the original chart as you work.</div>
 </body>
