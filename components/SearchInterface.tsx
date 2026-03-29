@@ -295,6 +295,12 @@ export default function SearchInterface({ username }: { username: string | null 
           >
             Written to Chart
           </Link>
+          <Link
+            href="/row-tracker"
+            className="text-sm text-gray-400 hover:text-[#e11d48] transition-colors font-medium"
+          >
+            Row Tracker
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           {username && (
