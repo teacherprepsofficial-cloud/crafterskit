@@ -140,7 +140,18 @@ export default function PhotoToPatternPage() {
           tbl += "</table>";
           out.push(tbl);
         } else if (line === "" || /^---+$/.test(line.trim())) {
-          // skip blank lines and horizontal rules
+          i++;
+        } else if (line.trim().startsWith("```")) {
+          // backtick code fence — collect content until closing ```
+          i++;
+          const fenceLines: string[] = [];
+          while (i < arr.length && !arr[i].trim().startsWith("```")) { fenceLines.push(arr[i]); i++; }
+          if (i < arr.length) i++; // skip closing ```
+          if (fenceLines.length > 0) {
+            out.push(`<pre class="schema">${fenceLines.join("\n")}</pre>`);
+          }
+        } else if (line.startsWith("## ")) {
+          out.push(`<h2 class="sec">${inlineBold(line.slice(3))}</h2>`);
           i++;
         } else if (line.startsWith("#### ")) {
           out.push(`<h3 class="sub">${inlineBold(line.slice(5))}</h3>`);
@@ -284,6 +295,19 @@ ${notesText ? `<div class="notes"><strong>Notes:</strong> ${notesText}</div>` : 
     while (i < lines.length) {
       const line = lines[i];
       if (!line.trim() || /^---+$/.test(line.trim())) { i++; continue; }
+      // backtick fence → <pre> block
+      if (line.trim().startsWith("```")) {
+        i++;
+        const fenceLines: string[] = [];
+        while (i < lines.length && !lines[i].trim().startsWith("```")) { fenceLines.push(lines[i]); i++; }
+        if (i < lines.length) i++;
+        if (fenceLines.length > 0) {
+          out.push(<pre key={`fence-${i}`} className="text-xs font-mono bg-gray-50 border border-gray-200 rounded p-3 my-2 overflow-x-auto whitespace-pre">{fenceLines.join("\n")}</pre>);
+        }
+        continue;
+      }
+      // ## heading inside a section
+      if (line.startsWith("## ")) { out.push(<h3 key={`h2-${i}`} className="text-base font-bold text-gray-900 mt-5 mb-1 border-b border-gray-200 pb-1">{line.slice(3)}</h3>); i++; continue; }
       // ### subheading
       if (line.startsWith("### ")) {
         out.push(<h4 key={`h3-${i}`} className="text-sm font-bold text-gray-800 mt-4 mb-1 border-b border-gray-200 pb-1">{line.slice(4)}</h4>);

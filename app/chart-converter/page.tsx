@@ -112,15 +112,34 @@ export default function ChartConverterPage() {
 
     function ib(s: string) { return s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>"); }
 
-    function rowHtml(line: string, idx: number): string {
-      if (!line.trim() || /^---+$/.test(line.trim())) return "";
-      const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
-      if (m) {
-        const bg = idx % 2 === 0 ? "#f8f8f8" : "#ffffff";
-        return `<div class="row" style="background:${bg}"><span class="row-label">${m[1]}</span><span class="row-body">${ib(m[2])}</span></div>`;
+    function processInstr(arr: string[]): string {
+      const out: string[] = [];
+      let rowIdx = 0;
+      let i = 0;
+      while (i < arr.length) {
+        const line = arr[i];
+        if (!line.trim() || /^---+$/.test(line.trim())) { i++; continue; }
+        if (line.trim().startsWith("```")) {
+          i++;
+          const fence: string[] = [];
+          while (i < arr.length && !arr[i].trim().startsWith("```")) { fence.push(arr[i]); i++; }
+          if (i < arr.length) i++;
+          if (fence.length > 0) out.push(`<pre style="font-family:'Courier New',monospace;font-size:8pt;background:#f9f9f9;border:1px solid #e0e0e0;padding:8px 10px;margin:8px 0;white-space:pre;overflow-x:auto;">${fence.join("\n")}</pre>`);
+          continue;
+        }
+        if (line.startsWith("## ")) { out.push(`<h2 style="font-family:Arial,sans-serif;font-size:7.5pt;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#be123c;border-bottom:1.5px solid #be123c;padding-bottom:2px;margin:22px 0 9px;">${ib(line.slice(3))}</h2>`); i++; continue; }
+        if (line.startsWith("### ") || line.startsWith("#### ")) { const s = line.startsWith("#### ") ? line.slice(5) : line.slice(4); out.push(`<h3 style="font-family:Arial,sans-serif;font-size:10pt;font-weight:700;color:#1a1a1a;margin:14px 0 3px;">${ib(s)}</h3>`); i++; continue; }
+        const m = line.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
+        if (m) {
+          const bg = rowIdx % 2 === 0 ? "#f8f8f8" : "#ffffff";
+          out.push(`<div class="row" style="background:${bg}"><span class="row-label">${m[1]}</span><span class="row-body">${ib(m[2])}</span></div>`);
+          rowIdx++; i++; continue;
+        }
+        if (line.startsWith("- ")) { out.push(`<li>${ib(line.slice(2))}</li>`); i++; continue; }
+        out.push(`<p>${ib(line)}</p>`);
+        i++;
       }
-      if (line.startsWith("- ")) return `<li>${ib(line.slice(2))}</li>`;
-      return `<p>${ib(line)}</p>`;
+      return out.join("\n");
     }
 
     const aboutText = sections.about.filter(Boolean).join(" ").replace(/^#+\s*/, "");
@@ -128,7 +147,7 @@ export default function ChartConverterPage() {
     const setupM = setupLine.match(/^\*\*([^*]+)\*\*:?\s*(.*)/);
     const setupHtml = setupM ? `<p class="setup"><strong>${setupM[1]}:</strong> ${ib(setupM[2])}</p>` : "";
     const keyHtml = sections.key.filter(Boolean).map(l => l.startsWith("- ") ? `<li>${ib(l.slice(2))}</li>` : `<p>${ib(l)}</p>`).join("\n");
-    const instrHtml = sections.instructions.map((l, i) => rowHtml(l, i)).join("\n");
+    const instrHtml = processInstr(sections.instructions);
     const notesText = sections.notes.filter(Boolean).join(" ");
 
     const imgTag = preview ? `<img src="${preview}" style="max-height:180px;max-width:200px;object-fit:contain;border-radius:4px;" alt="Chart" />` : "";
